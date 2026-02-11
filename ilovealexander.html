@@ -50,10 +50,10 @@
   <p id="message">Click the button to see a tribute message!</p>
   <button id="loveBtn">Show Message</button>
 
-  <!-- Load Starlight -->
+  <!-- Load Starlight runtime -->
   <script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/starlight.js"></script>
 
-  <!-- Use Starlight Script -->
+  <!-- Starlight code -->
   <starlight>
     showMessage = () => {
       msg = "Alexander the Great was one of history's most legendary conquerors!"
@@ -62,6 +62,19 @@
 
     document.getElementById("loveBtn").addEventListener("click", showMessage)
   </starlight>
+
+  <!-- Bridge: Execute <starlight> code -->
+  <script>
+    // Grab all <starlight> tags and run them
+    const scripts = document.querySelectorAll('starlight')
+    scripts.forEach(s => {
+      if (window.Starlight) {
+        window.Starlight.run(s.textContent)
+      } else {
+        console.error("Starlight runtime not loaded")
+      }
+    })
+  </script>
 
 </body>
 </html>
