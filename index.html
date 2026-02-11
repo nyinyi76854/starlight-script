@@ -1,112 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Starlight Build</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starlight Build Tool</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    h1 { margin-bottom: 40px; }
-    button {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      font-size: 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover { background: #2563eb; }
-    #log {
-      margin-top: 20px;
-      max-width: 600px;
-      text-align: left;
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 8px;
-      overflow-y: auto;
-      max-height: 200px;
-      font-family: monospace;
-      font-size: 14px;
-    }
+    body { font-family: sans-serif; padding: 20px; }
+    textarea { width: 100%; height: 300px; }
+    button { padding: 10px 20px; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <h1>Starlight Builder</h1>
-  <button id="buildBtn">Build starlight.js</button>
-  <div id="log"></div>
+<h1>Starlight Builder</h1>
 
-  <script>
-    const logEl = document.getElementById("log");
-    function log(msg) {
-      logEl.innerHTML += msg + "<br>";
-      console.log(msg);
+<p>
+  This page will fetch your four source files from GitHub, combine them into one file,
+  and let you download the result as <strong>starlight.js</strong>.
+</p>
+
+<textarea id="output" placeholder="Generated code will appear here..."></textarea><br>
+
+<button id="buildBtn">Build starlight.js</button>
+<button id="downloadBtn" disabled>Download starlight.js</button>
+
+<script>
+(async function() {
+  // Edit these paths for your repo
+  const baseURL = "https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/";
+
+  const files = [
+    "src/syntax.js",
+    "src/core/parser.js",
+    "src/core/runtime.js",
+    "src/index.js"
+  ];
+
+  const buildBtn = document.getElementById("buildBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const output = document.getElementById("output");
+
+  let combinedCode = "";
+
+  // Helper to fetch raw file text
+  async function fetchFile(path) {
+    const url = baseURL + path;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch " + path);
+    return await res.text();
+  }
+
+  buildBtn.onclick = async () => {
+    try {
+      output.value = "Fetching files...";
+      combinedCode = "";
+
+      for (const f of files) {
+        const txt = await fetchFile(f);
+        combinedCode += "\n\n// --- " + f + " ---\n" + txt;
+      }
+
+      output.value = combinedCode;
+      downloadBtn.disabled = false;
+    } catch (e) {
+      output.value = "Error: " + e.message;
     }
+  };
 
-    document.getElementById("buildBtn").addEventListener("click", () => {
-      log("Starting build...");
-
-      (function() {
-        // Use GitHub raw URLs instead of local file paths
-        const repoBase = "https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/src/";
-        const files = [
-          "lexer.js",
-          "parser.js",
-          "compiler.js",
-          "runtime.js",
-          "dom.js",
-          "core.js"
-        ];
-
-        const outputName = "starlight.js";
-
-        function readFile(fileName) {
-          return fetch(repoBase + fileName)
-            .then(r => {
-              if (!r.ok) throw new Error("Failed to load " + fileName);
-              return r.text();
-            });
-        }
-
-        const promises = files.map(f => readFile(f));
-
-        Promise.all(promises)
-          .then(contents => {
-            let output = "/* Starlight.js - Auto-generated */\n\n";
-            contents.forEach((c, i) => {
-              output += "\n/* ===== " + files[i] + " ===== */\n\n";
-              output += c + "\n";
-            });
-
-            // Optional minify: remove single-line comments and empty lines
-            output = output.replace(/\/\/.*$/gm, "").replace(/\n\s*\n/gm, "\n");
-
-            // Trigger download
-            const blob = new Blob([output], { type: "application/javascript" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = outputName;
-            a.click();
-            log("✅ starlight.js built and download triggered!");
-          })
-          .catch(e => log("❌ Error: " + e.message));
-      })();
-    });
-  </script>
+  downloadBtn.onclick = () => {
+    const blob = new Blob([combinedCode], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "starlight.js";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+})();
+</script>
 
 </body>
 </html>
