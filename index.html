@@ -17,11 +17,7 @@
       margin: 0;
       text-align: center;
     }
-
-    h1 {
-      margin-bottom: 40px;
-    }
-
+    h1 { margin-bottom: 40px; }
     button {
       background: #3b82f6;
       color: white;
@@ -32,11 +28,7 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
-    button:hover {
-      background: #2563eb;
-    }
-
+    button:hover { background: #2563eb; }
     #log {
       margin-top: 20px;
       max-width: 600px;
@@ -54,9 +46,7 @@
 <body>
 
   <h1>Starlight Builder</h1>
-
   <button id="buildBtn">Build starlight.js</button>
-
   <div id="log"></div>
 
   <script>
@@ -70,6 +60,8 @@
       log("Starting build...");
 
       (function() {
+        // Use GitHub raw URLs instead of local file paths
+        const repoBase = "https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/src/";
         const files = [
           "lexer.js",
           "parser.js",
@@ -78,18 +70,18 @@
           "dom.js",
           "core.js"
         ];
-        const srcFolder = "/src/";
+
         const outputName = "starlight.js";
 
-        function readFile(filePath) {
-          return fetch(filePath)
+        function readFile(fileName) {
+          return fetch(repoBase + fileName)
             .then(r => {
-              if (!r.ok) throw new Error("Failed to load " + filePath);
+              if (!r.ok) throw new Error("Failed to load " + fileName);
               return r.text();
             });
         }
 
-        const promises = files.map(f => readFile(srcFolder + f));
+        const promises = files.map(f => readFile(f));
 
         Promise.all(promises)
           .then(contents => {
@@ -100,8 +92,7 @@
             });
 
             // Optional minify: remove single-line comments and empty lines
-            output = output.replace(/\/\/.*$/gm, "")
-                           .replace(/\n\s*\n/gm, "\n");
+            output = output.replace(/\/\/.*$/gm, "").replace(/\n\s*\n/gm, "\n");
 
             // Trigger download
             const blob = new Blob([output], { type: "application/javascript" });
