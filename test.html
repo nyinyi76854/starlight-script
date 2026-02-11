@@ -8,16 +8,11 @@
 <h1 id="demo"></h1>
 <h2 id="calc"></h2>
 
-<!-- Starlight custom tags -->
 <starlight>
-let x = 10
-let y = 20
-print(x + y)
-whereElement("#demo").set("Hello from Starlight!")
-whereElement("#calc").set(x * y)
+print "Hello from Starlight!"; let x = 10; let y = 20; print(x + y); whereElement("#demo").set("Hello from Starlight!"); whereElement("#calc").set(x * y)
 </starlight>
 
-<!-- Include starlight-script.js from CDN -->
+<!-- Include the Starlight runtime -->
 <script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script/starlight-script.js"></script>
 
 </body>
