@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Starlight Build</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    #log {
+      margin-top: 20px;
+      max-width: 600px;
+      text-align: left;
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-y: auto;
+      max-height: 200px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Starlight Builder</h1>
+
+  <button id="buildBtn">Build starlight.js</button>
+
+  <div id="log"></div>
+
+  <script>
+    const logEl = document.getElementById("log");
+    function log(msg) {
+      logEl.innerHTML += msg + "<br>";
+      console.log(msg);
+    }
+
+    document.getElementById("buildBtn").addEventListener("click", () => {
+      log("Starting build...");
+
+      (function() {
+        const files = [
+          "lexer.js",
+          "parser.js",
+          "compiler.js",
+          "runtime.js",
+          "dom.js",
+          "core.js"
+        ];
+        const srcFolder = "../src/";
+        const outputName = "starlight.js";
+
+        function readFile(filePath) {
+          return fetch(filePath)
+            .then(r => {
+              if (!r.ok) throw new Error("Failed to load " + filePath);
+              return r.text();
+            });
+        }
+
+        const promises = files.map(f => readFile(srcFolder + f));
+
+        Promise.all(promises)
+          .then(contents => {
+            let output = "/* Starlight.js - Auto-generated */\n\n";
+            contents.forEach((c, i) => {
+              output += "\n/* ===== " + files[i] + " ===== */\n\n";
+              output += c + "\n";
+            });
+
+            // Optional minify: remove single-line comments and empty lines
+            output = output.replace(/\/\/.*$/gm, "")
+                           .replace(/\n\s*\n/gm, "\n");
+
+            // Trigger download
+            const blob = new Blob([output], { type: "application/javascript" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = outputName;
+            a.click();
+            log("✅ starlight.js built and download triggered!");
+          })
+          .catch(e => log("❌ Error: " + e.message));
+      })();
+    });
+  </script>
+
+</body>
+</html>
