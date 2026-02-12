@@ -1,81 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Starlight Build Tool</title>
+  <title>Android-like DSL Test</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    textarea { width: 100%; height: 300px; }
-    button { padding: 10px 20px; margin-top: 10px; }
+    textarea { width: 100%; height: 150px; }
+    pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    #rendered { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    button { margin-top: 5px; }
   </style>
 </head>
 <body>
 
-<h1>Starlight Builder</h1>
-
-<p>
-  This page will fetch your four source files from GitHub, combine them into one file,
-  and let you download the result as <strong>starlight.js</strong>.
-</p>
-
-<textarea id="output" placeholder="Generated code will appear here..."></textarea><br>
-
-<button id="buildBtn">Build starlight.js</button>
-<button id="downloadBtn" disabled>Download starlight.js</button>
-
-<script>
-(async function() {
-  // Edit these paths for your repo
-  const baseURL = "https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/";
-
-  const files = [
-    "src/syntax.js",
-    "src/core/parser.js",
-    "src/core/runtime.js",
-    "src/index.js"
-  ];
-
-  const buildBtn = document.getElementById("buildBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const output = document.getElementById("output");
-
-  let combinedCode = "";
-
-  // Helper to fetch raw file text
-  async function fetchFile(path) {
-    const url = baseURL + path;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Failed to fetch " + path);
-    return await res.text();
+<h2>Starlight Code</h2>
+<textarea id="dslInput">
+Screen {
+  Header {
+    Title "Hello, {username}"
   }
 
-  buildBtn.onclick = async () => {
-    try {
-      output.value = "Fetching files...";
-      combinedCode = "";
+  Button onClick=handleClick {
+    Text "Click me ({clickCount})"
+  }
 
-      for (const f of files) {
-        const txt = await fetchFile(f);
-        combinedCode += "\n\n// --- " + f + " ---\n" + txt;
-      }
+  Input placeholder="Type here" value={inputValue}
+}
+</textarea>
+<button id="compileBtn">Compile & Render</button>
 
-      output.value = combinedCode;
-      downloadBtn.disabled = false;
-    } catch (e) {
-      output.value = "Error: " + e.message;
-    }
+<h2>Compiled JS</h2>
+<pre id="compiledJS"></pre>
+
+<h2>Rendered Output</h2>
+<div id="rendered"></div>
+
+<script type="module">
+  import HTMLCompiler, { createElement } from './html-compiler.js';
+  import CompilerRuntime, { render, signal } from './compiler.js';
+
+  const [username, setUsername] = signal("Alice");
+  const [clickCount, setClickCount] = signal(0);
+  const [inputValue, setInputValue] = signal("");
+
+  window.handleClick = () => {
+    setClickCount(clickCount() + 1);
   };
 
-  downloadBtn.onclick = () => {
-    const blob = new Blob([combinedCode], { type: "text/javascript" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "starlight.js";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-})();
+  document.getElementById("compileBtn").addEventListener("click", () => {
+    const dsl = document.getElementById("dslInput").value;
+
+    const compiler = new HTMLCompiler();
+    const jsCode = compiler.compile(dsl);
+
+    document.getElementById("compiledJS").textContent = jsCode;
+
+    const AppVNode = eval(jsCode);
+
+    const container = document.getElementById("rendered");
+    render(AppVNode, container);
+  });
 </script>
 
 </body>
