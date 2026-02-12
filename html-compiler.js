@@ -239,11 +239,27 @@ class CodeGenerator {
   }
 
   generateElement(node) {
-    const mappedTag = viewTags[node.name] || node.name;
-    const propsString = JSON.stringify(node.props);
-    const children = node.children.map(c => this.generate(c)).join(", ");
-    return `createElement("${mappedTag}", ${propsString}${children ? ", " + children : ""})`;
+  const mappedTag = viewTags[node.name] || node.name;
+
+  // Generate props
+  let propsParts = [];
+  for (let key in node.props) {
+    const value = node.props[key];
+    if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
+      // Inject as JS expression
+      propsParts.push(`${key}: ${value.slice(1, -1)}`);
+    } else {
+      propsParts.push(`${key}: ${JSON.stringify(value)}`);
+    }
   }
+  const propsString = `{ ${propsParts.join(", ")} }`;
+
+  // Children
+  const children = node.children.map(c => this.generate(c)).join(", ");
+
+  return `createElement("${mappedTag}", ${propsString}${children ? ", " + children : ""})`;
+}
+
 }
 
 export class HTMLCompiler {
