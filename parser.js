@@ -38,7 +38,12 @@
       while (["+", "-", "*", "/"].includes(tokens[current])) {
         const operator = tokens[current++];
         const right = walk();
-        left = { type: "BinaryExpression", operator, left, right };
+        left = {
+          type: "BinaryExpression",
+          operator,
+          left,
+          right
+        };
       }
 
       return left;
@@ -49,6 +54,7 @@
     while (current < tokens.length) {
       let token = tokens[current];
 
+      // Variable
       if (token === "let") {
         current++;
         const name = tokens[current++];
@@ -63,6 +69,7 @@
         continue;
       }
 
+      // Print
       if (token === "print") {
         current++;
         current++; // (
@@ -76,6 +83,7 @@
         continue;
       }
 
+      // whereElement
       if (token === "whereElement") {
         current++; // whereElement
         current++; // (
@@ -94,7 +102,6 @@
           selector,
           argument
         });
-
         continue;
       }
 
