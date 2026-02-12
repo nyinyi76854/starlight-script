@@ -838,10 +838,6 @@ export function useStore(store) {
   return store;
 }
 
-export function Provider({ context, value, children }) {
-  context._currentValue = value;
-  return children;
-}
 export function useSpring(initial, { stiffness = 0.1, damping = 0.8 } = {}) {
   const [value, setValue] = useState(initial);
 
@@ -1323,7 +1319,6 @@ export default {
   lazyWithPreload,
   useReducer,
   useStore,
-  Provider,
   useSpring,
   useTransitionGroup,
   useDrag,
