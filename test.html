@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <title>Starlight Test</title>
-</head> 
+</head>
 <body>
 
 <h1 id="demo"></h1>
@@ -17,18 +16,9 @@ whereElement("#demo").set("Hello from Starlight!");
 whereElement("#calc").set(x * y);
 </starlight>
 
-<!-- Load from GitHub CDN (ROOT files) -->
 <script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/lexer.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/parser.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/interpreter.js"></script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  document.querySelectorAll("starlight").forEach(tag => {
-    window.Starlight.run(tag.textContent.trim());
-  });
-});
-</script>
 
 </body>
 </html>
