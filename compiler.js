@@ -942,6 +942,326 @@ export function lazyComponentWrapper(factory, fallback = null) {
 export function withErrorBoundary(Component, fallback = null) {
   return (props) => createElement(ErrorBoundary, { fallback }, createElement(Component, props));
 }
+export function renderToStaticMarkup(vnode) {
+  if (typeof vnode === "string") return vnode;
+
+  if (typeof vnode.type === "function") {
+    return renderToStaticMarkup(vnode.type(vnode.props));
+  }
+
+  const propsString = Object.entries(vnode.props || {})
+    .map(([k, v]) => `${k}="${v}"`)
+    .join(" ");
+
+  const children = vnode.children
+    .map(renderToStaticMarkup)
+    .join("");
+
+  return `<${vnode.type}${propsString ? " " + propsString : ""}>${children}</${vnode.type}>`;
+}
+
+export function hydrateStreaming(vnode, container) {
+  const stream = renderToNodeStream(vnode);
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let html = "";
+
+  function push() {
+    reader.read().then(({ done, value }) => {
+      if (done) {
+        container.innerHTML = html;
+        hydrate(vnode, container);
+        return;
+      }
+      html += decoder.decode(value);
+      push();
+    });
+  }
+
+  push();
+}
+export function traceUpdates() {
+  const style = document.createElement("style");
+  style.innerHTML = `
+    ._starlight-update { outline: 2px solid red; }
+  `;
+  document.head.appendChild(style);
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach(m => {
+      if (m.type === "childList") {
+        m.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            node.classList.add("_starlight-update");
+            setTimeout(() => node.classList.remove("_starlight-update"), 500);
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+export function useProfiler(id, fn) {
+  const start = performance.now();
+  const result = fn();
+  const end = performance.now();
+  console.log(`[Starlight Profiler] ${id}: render took ${end - start}ms`);
+  return result;
+}
+export function classNames(...args) {
+  return args.flat().filter(Boolean).join(" ");
+}
+
+export function mergeStyles(...styles) {
+  return Object.assign({}, ...styles);
+}
+
+export function composeRefs(...refs) {
+  return (el) => {
+    refs.forEach(ref => {
+      if (!ref) return;
+      if (typeof ref === "function") ref(el);
+      else ref.current = el;
+    });
+  };
+}
+export function useHistory() {
+  const push = (path) => {
+    history.pushState({}, "", path);
+    window.dispatchEvent(new Event("popstate"));
+  };
+
+  const replace = (path) => {
+    history.replaceState({}, "", path);
+    window.dispatchEvent(new Event("popstate"));
+  };
+
+  return { push, replace };
+}
+
+export function useLocation() {
+  const [location, setLocation] = signal(window.location.pathname);
+
+  window.addEventListener("popstate", () => {
+    setLocation(window.location.pathname);
+  });
+
+  return location;
+}
+
+export function useMatch(pattern) {
+  const path = useLocation();
+  const regex = new RegExp("^" + pattern.replace(/:[^\s/]+/g, "([^/]+)") + "$");
+  const match = path().match(regex);
+  if (!match) return null;
+
+  const keys = (pattern.match(/:[^\s/]+/g) || []).map(k => k.slice(1));
+  const params = {};
+  keys.forEach((key, i) => {
+    params[key] = match[i + 1];
+  });
+
+  return { path: path(), params };
+}
+
+export function RedirectTo({ to }) {
+  navigate(to);
+  return null;
+}
+export function useMemo(factory, deps) {
+  const component = currentComponent;
+  const index = component.stateIndex++;
+
+  if (!component.state[index]) {
+    component.state[index] = { deps: undefined, value: undefined };
+  }
+
+  const record = component.state[index];
+
+  let changed = !record.deps || !deps || deps.some((d, i) => d !== record.deps[i]);
+  if (changed) {
+    record.value = factory();
+    record.deps = deps;
+  }
+
+  return record.value;
+}
+
+export function useCallback(callback, deps) {
+  return useMemo(() => callback, deps);
+}
+
+export function useDeferredValue(value) {
+  const [deferred, setDeferred] = useState(value);
+
+  nextTick(() => setDeferred(value));
+
+  return deferred;
+}
+
+let globalId = 0;
+export function useId() {
+  const [id] = useState(() => `starlight-${globalId++}`);
+  return id;
+}
+export function motion(type) {
+  return (props) => {
+    const { animate: animationProps, ...rest } = props;
+    const dom = createElement(type, rest);
+
+    effect(() => {
+      if (animationProps) animate(dom, animationProps);
+    });
+
+    return dom;
+  };
+}
+
+export function AnimatePresence({ children, enter, exit }) {
+  const [rendered, setRendered] = useState(children);
+
+  effect(() => {
+    const prev = rendered()[0] || [];
+    const entering = children.filter(c => !prev.includes(c));
+    const leaving = prev.filter(c => !children.includes(c));
+
+    entering.forEach(c => enter && enter(c));
+    leaving.forEach(c => exit && exit(c));
+
+    setRendered(children);
+  });
+
+  return rendered()[0] ? rendered()[0] : null;
+}
+export function catchError(fn, fallback) {
+  try {
+    return fn();
+  } catch (err) {
+    console.error("[Starlight Error]", err);
+    if (fallback) return fallback(err);
+    return null;
+  }
+}
+
+const globalErrorHandlers = new Set();
+export function onError(handler) {
+  globalErrorHandlers.add(handler);
+}
+window.addEventListener("error", (e) => {
+  globalErrorHandlers.forEach(h => h(e.error));
+});
+window.addEventListener("unhandledrejection", (e) => {
+  globalErrorHandlers.forEach(h => h(e.reason));
+});
+export function useValidator(rules) {
+  const [errors, setErrors] = useState({});
+
+  function validate(values) {
+    const newErrors = {};
+    for (let key in rules) {
+      const rule = rules[key];
+      const value = values[key];
+      const result = rule(value);
+      if (result !== true) newErrors[key] = result;
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  return [errors, validate];
+}
+
+export function Controller({ name, control, render }) {
+  const [value, setValue] = control[name];
+  return render({ value: value(), onChange: v => setValue(v) });
+}
+export function traceRenders(componentName) {
+  effect(() => {
+    console.log(`[Starlight Render] ${componentName} rendered`);
+  });
+}
+
+export function useInspector() {
+  const [inspected, setInspected] = useState(null);
+
+  window.addEventListener("click", (e) => {
+    setInspected(e.target);
+    console.log("[Starlight Inspector] Clicked Element:", e.target);
+  });
+
+  return inspected;
+}
+export function useSafeAreaInsets() {
+  const [insets, setInsets] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
+
+  function update() {
+    setInsets({
+      top: window.visualViewport?.offsetTop || 0,
+      bottom: window.innerHeight - (window.visualViewport?.height || window.innerHeight),
+      left: window.visualViewport?.offsetLeft || 0,
+      right: window.innerWidth - (window.visualViewport?.width || window.innerWidth)
+    });
+  }
+
+  window.addEventListener("resize", update);
+  update();
+
+  return insets;
+}
+
+export function useKeyboard() {
+  const [visible, setVisible] = useState(false);
+
+  function onResize() {
+    setVisible(window.innerHeight < window.visualViewport?.height);
+  }
+
+  window.addEventListener("resize", onResize);
+  return visible;
+}
+
+export function Dimensions() {
+  const [dims, setDims] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  function onResize() {
+    setDims({ width: window.innerWidth, height: window.innerHeight });
+  }
+
+  window.addEventListener("resize", onResize);
+
+  return dims;
+}
+export function cloneVNode(vnode, props = {}, children = null) {
+  return createElement(
+    vnode.type,
+    { ...vnode.props, ...props },
+    children !== null ? children : vnode.children
+  );
+}
+
+export function shallowEqual(objA, objB) {
+  if (objA === objB) return true;
+  if (!objA || !objB) return false;
+
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (let key of keysA) {
+    if (objA[key] !== objB[key]) return false;
+  }
+
+  return true;
+}
+
+export function defer(fn) {
+  if (typeof queueMicrotask === "function") queueMicrotask(fn);
+  else if (typeof Promise !== "undefined") Promise.resolve().then(fn);
+  else setTimeout(fn, 0);
+}
 
 export default {
   createElement,
@@ -1015,7 +1335,34 @@ export default {
   useSwipe,
   useImperativeHandle,
   lazyComponentWrapper,
-  withErrorBoundary
-
-
+  withErrorBoundary,
+  renderToStaticMarkup,
+  hydrateStreaming,
+  traceUpdates,
+  useProfiler,
+  classNames,
+  mergeStyles,
+  composeRefs,
+  useHistory,
+  useLocation,
+  useMatch,
+  RedirectTo,
+  useMemo,
+  useCallback,
+  useDeferredValue,
+  useId,
+  motion,
+  AnimatePresence,
+  catchError,
+  onError,
+  useValidator,
+  Controller,
+  traceRenders,
+  useInspector,
+  useSafeAreaInsets,
+  useKeyboard,
+  Dimensions,
+  cloneVNode,
+  shallowEqual,
+  defer
 };
