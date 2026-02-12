@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Starlight Test</title>
 </head>
 <body>
@@ -8,17 +9,18 @@
 <h1 id="demo"></h1>
 <h2 id="calc"></h2>
 
-<starlight>
+<script type="text/starlight">
 let x = 10;
 let y = 20;
 print(x + y);
 whereElement("#demo").set("Hello from Starlight!");
 whereElement("#calc").set(x * y);
-</starlight>
+</script>
 
-<script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/lexer.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/parser.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/nyinyi76854/starlight-script@main/interpreter.js"></script>
+<!-- Load JS directly from GitHub raw URLs -->
+<script src="https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/lexer.js"></script>
+<script src="https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/parser.js"></script>
+<script src="https://raw.githubusercontent.com/nyinyi76854/starlight-script/main/interpreter.js"></script>
 
 </body>
 </html>
