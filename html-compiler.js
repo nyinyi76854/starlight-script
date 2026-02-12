@@ -146,8 +146,19 @@ class Parser {
 
   eat(type) {
     const token = this.current();
+    if (!token) throw new Error(`Unexpected end of input, expected ${type}`);
     if (type && token.type !== type) {
       throw new Error(`Expected ${type}, got ${token.type}`);
+    }
+    this.position++;
+    return token;
+  }
+
+  expectAny(...types) {
+    const token = this.current();
+    if (!token) throw new Error(`Unexpected end of input, expected one of: ${types.join(", ")}`);
+    if (!types.includes(token.type)) {
+      throw new Error(`Expected one of [${types.join(", ")}], got ${token.type}`);
     }
     this.position++;
     return token;
@@ -164,12 +175,21 @@ class Parser {
   parseElement() {
     const name = this.eat("IDENTIFIER").value;
     const props = {};
-
     while (this.current() && this.current().type === "IDENTIFIER") {
       const key = this.eat("IDENTIFIER").value;
       this.eat("EQUALS");
-      const valueToken = this.eat("IDENTIFIER") || this.eat("STRING");
-      props[key] = valueToken.value;
+      const valueToken = this.expectAny("IDENTIFIER", "STRING", "LBRACE");
+
+      if (valueToken.type === "LBRACE") {
+        let expr = "";
+        while (this.current().type !== "RBRACE") {
+          expr += this.eat("IDENTIFIER").value;
+        }
+        this.eat("RBRACE");
+        props[key] = `{${expr}}`;
+      } else {
+        props[key] = valueToken.value;
+      }
     }
 
     let children = [];
@@ -212,7 +232,7 @@ class CodeGenerator {
   transformText(text) {
     if (text.includes("{")) {
       const replaced = text.replace(/\{(.*?)\}/g, "${$1}");
-      return `\`${replaced}\``; 
+      return `\`${replaced}\``;
     } else {
       return `"${text}"`;
     }
@@ -240,6 +260,5 @@ export class HTMLCompiler {
 export function createElement(type, props, ...children) {
   return { type, props: props || {}, children: children.flat() };
 }
-
 
 export default HTMLCompiler;
