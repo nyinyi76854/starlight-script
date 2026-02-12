@@ -2,13 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Android-Like DSL Test</title>
+  <title>Android-Like DSL Demo</title>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    section { margin-bottom: 40px; }
-    textarea { width: 100%; height: 120px; font-family: monospace; }
-    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
-    #rendered { border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    h1 { text-align: center; margin-bottom: 30px; }
+
+    section {
+      margin-bottom: 30px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    section h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      background: #fefefe;
+    }
+
+    pre {
+      background: #f5f5f5;
+      padding: 12px;
+      overflow-x: auto;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    #rendered {
+      border: 1px solid #ccc;
+      padding: 12px;
+      min-height: 150px;
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    /* Android-like UI components */
+    UIButton {
+      display: inline-block;
+      padding: 8px 14px;
+      background: #2196F3;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 4px 0;
+      user-select: none;
+    }
+
+    UILabel {
+      display: block;
+      margin: 4px 0;
+    }
+
+    UIContainer {
+      display: block;
+      margin: 8px 0;
+      padding: 8px;
+      border: 1px dashed #bbb;
+      border-radius: 4px;
+    }
+
+    UIHeader {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    UIFooter {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    UITitle {
+      font-size: 1.4em;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
   </style>
 </head>
 <body>
@@ -17,15 +109,15 @@
 
   <!-- 1️⃣ DSL Input -->
   <section>
-    <h2>DSL Input</h2>
+    <h2>Starlight Frontend Input</h2>
     <textarea id="dsl">
-div {
-  header { h1 "Welcome to My App" }
-  section {
-    p "Hello, {username}!"
-    button onClick={handleClick} "Click Me"
+UIContainer {
+  UIHeader { UITitle "Welcome to My App" }
+  UIContainer {
+    UILabel "Hello, {username}!"
+    UIButton onClick={handleClick} "Click Me"
   }
-  footer { p "Footer Text" }
+  UIFooter { UILabel "Footer Text" }
 }
     </textarea>
   </section>
@@ -38,11 +130,10 @@ div {
 
   <!-- 3️⃣ Rendered Output -->
   <section>
-    <h2>Rendered Output</h2>
+    <h2>Rendered Output (Android's View)</h2>
     <div id="rendered"></div>
   </section>
 
-  <!-- Include your compiler and runtime -->
   <script type="module">
     import HTMLCompiler from './html-compiler.js';
     import Starlight from './compiler.js';
@@ -51,23 +142,18 @@ div {
     const compiledOutput = document.getElementById('compiled');
     const renderedContainer = document.getElementById('rendered');
 
-    // Example runtime data
     const username = "Alice";
     function handleClick() { alert("Button clicked!"); }
 
     function compileAndRender() {
       const compiler = new HTMLCompiler();
       try {
-        // 1️⃣ Compile DSL to JS
         const code = compiler.compile(dslInput.value);
         compiledOutput.textContent = code;
 
-        // 2️⃣ Execute compiled code using Starlight runtime
-        // Use Function constructor to inject variables
         const fn = new Function('createElement', 'username', 'handleClick', `return ${code}`);
         const vnode = fn(Starlight.createElement, username, handleClick);
 
-        // 3️⃣ Render the vnode
         Starlight.render(vnode, renderedContainer);
       } catch (err) {
         compiledOutput.textContent = err.message;
@@ -77,8 +163,8 @@ div {
     }
 
     dslInput.addEventListener('input', compileAndRender);
-
-    compileAndRender(); // initial render
+    compileAndRender();
   </script>
+
 </body>
 </html>
