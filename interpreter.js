@@ -31,6 +31,7 @@
         case "BinaryExpression":
           const left = evaluate(node.left);
           const right = evaluate(node.right);
+
           switch (node.operator) {
             case "+": return left + right;
             case "-": return left - right;
@@ -60,9 +61,9 @@
 
   window.Starlight.run = run;
 
-  // 🔥 AUTO RUN <starlight>
+  // 🔥 AUTO RUN <script type="text/starlight">
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("starlight").forEach(tag => {
+    document.querySelectorAll('script[type="text/starlight"]').forEach(tag => {
       run(tag.textContent.trim());
     });
   });
