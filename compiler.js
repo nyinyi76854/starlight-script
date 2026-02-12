@@ -337,10 +337,6 @@ export function useContext(context) {
   return context._currentValue;
 }
 
-export function Provider({ context, value, children }) {
-  context._currentValue = value;
-  return children;
-}
 export function cloneElement(element, props = {}, ...children) {
   return createElement(
     element.type,
@@ -1288,7 +1284,6 @@ export default {
   lazy,
   createContext,
   useContext,
-  Provider,
   cloneElement,
   isValidElement,
   mergeProps,
