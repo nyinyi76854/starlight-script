@@ -1,9 +1,7 @@
-// src/interpreter.js
-
 (function () {
 
   if (!window.Starlight || !window.Starlight.parse) {
-    throw new Error("Parser must be loaded before interpreter.");
+    throw new Error("Load parser.js first.");
   }
 
   const parse = window.Starlight.parse;
@@ -17,45 +15,42 @@
 
       switch (node.type) {
 
-        case 'Program':
+        case "Program":
           node.body.forEach(evaluate);
           break;
 
-        case 'NumberLiteral':
+        case "NumberLiteral":
           return node.value;
 
-        case 'StringLiteral':
+        case "StringLiteral":
           return node.value;
 
-        case 'Identifier':
+        case "Identifier":
           return env[node.name];
 
-        case 'BinaryExpression':
+        case "BinaryExpression":
           const left = evaluate(node.left);
           const right = evaluate(node.right);
-
           switch (node.operator) {
-            case '+': return left + right;
-            case '-': return left - right;
-            case '*': return left * right;
-            case '/': return left / right;
+            case "+": return left + right;
+            case "-": return left - right;
+            case "*": return left * right;
+            case "/": return left / right;
           }
           break;
 
-        case 'VariableDeclaration':
+        case "VariableDeclaration":
           env[node.name] = evaluate(node.value);
           break;
 
-        case 'PrintStatement':
+        case "PrintStatement":
           console.log(evaluate(node.argument));
           break;
 
-        case 'WhereCall':
+        case "WhereCall":
           const value = evaluate(node.argument);
           const el = document.querySelector(node.selector);
-          if (el && node.method === 'set') {
-            el.textContent = value;
-          }
+          if (el) el.textContent = value;
           break;
       }
     }
@@ -64,5 +59,12 @@
   }
 
   window.Starlight.run = run;
+
+  // 🔥 AUTO RUN <starlight>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("starlight").forEach(tag => {
+      run(tag.textContent.trim());
+    });
+  });
 
 })();
