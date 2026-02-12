@@ -2,65 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Android-like DSL Test</title>
+  <title>Android-Like DSL Test</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    textarea { width: 100%; height: 150px; }
-    pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
-    #rendered { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-    button { margin-top: 5px; }
+    body { font-family: sans-serif; margin: 20px; }
+    section { margin-bottom: 40px; }
+    textarea { width: 100%; height: 120px; font-family: monospace; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    #rendered { border: 1px solid #ccc; padding: 10px; min-height: 100px; }
   </style>
 </head>
 <body>
 
-<h2>Starlight Code</h2>
-<textarea id="dslInput">
-Screen {
-  Header {
-    Title "Hello, {username}"
-  }
+  <h1>Android-Like DSL Demo</h1>
 
-  Button onClick=handleClick {
-    Text "Click me ({clickCount})"
+  <!-- 1️⃣ DSL Input -->
+  <section>
+    <h2>DSL Input</h2>
+    <textarea id="dsl">
+div {
+  header { h1 "Welcome to My App" }
+  section {
+    p "Hello, {username}!"
+    button onClick={handleClick} "Click Me"
   }
-
-  Input placeholder="Type here" value={inputValue}
+  footer { p "Footer Text" }
 }
-</textarea>
-<button id="compileBtn">Compile & Render</button>
+    </textarea>
+  </section>
 
-<h2>Compiled JS</h2>
-<pre id="compiledJS"></pre>
+  <!-- 2️⃣ Compiled JS -->
+  <section>
+    <h2>Compiled JavaScript</h2>
+    <pre id="compiled"></pre>
+  </section>
 
-<h2>Rendered Output</h2>
-<div id="rendered"></div>
+  <!-- 3️⃣ Rendered Output -->
+  <section>
+    <h2>Rendered Output</h2>
+    <div id="rendered"></div>
+  </section>
 
-<script type="module">
-  import HTMLCompiler, { createElement } from './html-compiler.js';
-  import CompilerRuntime, { render, signal } from './compiler.js';
+  <!-- Include your compiler and runtime -->
+  <script type="module">
+    import HTMLCompiler from './html-compiler.js';
+    import Starlight from './compiler.js';
 
-  const [username, setUsername] = signal("Alice");
-  const [clickCount, setClickCount] = signal(0);
-  const [inputValue, setInputValue] = signal("");
+    const dslInput = document.getElementById('dsl');
+    const compiledOutput = document.getElementById('compiled');
+    const renderedContainer = document.getElementById('rendered');
 
-  window.handleClick = () => {
-    setClickCount(clickCount() + 1);
-  };
+    // Example runtime data
+    const username = "Alice";
+    function handleClick() { alert("Button clicked!"); }
 
-  document.getElementById("compileBtn").addEventListener("click", () => {
-    const dsl = document.getElementById("dslInput").value;
+    function compileAndRender() {
+      const compiler = new HTMLCompiler();
+      try {
+        // 1️⃣ Compile DSL to JS
+        const code = compiler.compile(dslInput.value);
+        compiledOutput.textContent = code;
 
-    const compiler = new HTMLCompiler();
-    const jsCode = compiler.compile(dsl);
+        // 2️⃣ Execute compiled code using Starlight runtime
+        // Use Function constructor to inject variables
+        const fn = new Function('createElement', 'username', 'handleClick', `return ${code}`);
+        const vnode = fn(Starlight.createElement, username, handleClick);
 
-    document.getElementById("compiledJS").textContent = jsCode;
+        // 3️⃣ Render the vnode
+        Starlight.render(vnode, renderedContainer);
+      } catch (err) {
+        compiledOutput.textContent = err.message;
+        renderedContainer.innerHTML = '<p style="color:red;">Error rendering DSL</p>';
+        console.error(err);
+      }
+    }
 
-    const AppVNode = eval(jsCode);
+    dslInput.addEventListener('input', compileAndRender);
 
-    const container = document.getElementById("rendered");
-    render(AppVNode, container);
-  });
-</script>
-
+    compileAndRender(); // initial render
+  </script>
 </body>
 </html>
