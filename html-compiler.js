@@ -1,59 +1,77 @@
 const viewTags = {
-  html: "UIContainer",
-  body: "UIContainer",
-  div: "UIContainer",
-  section: "UIContainer",
-  header: "UIHeader",
-  footer: "UIFooter",
-  article: "UIArticle",
-  aside: "UISidebar",
-  nav: "UINavigation",
-  ul: "UIList",
-  ol: "UIList",
-  li: "UIListItem",
-  span: "UILabel",
-  p: "UILabel",
-  h1: "UITitle",
-  h2: "UISubtitle",
-  h3: "UILabel",
-  h4: "UILabel",
-  h5: "UILabel",
-  h6: "UILabel",
-  button: "UIButton",
-  input: "UITextField",
-  textarea: "UITextArea",
-  select: "UIDropdown",
-  option: "UIOption",
-  checkbox: "UICheckbox",
-  radio: "UIRadioButton",
-  form: "UIForm",
-  label: "UILabel",
-  fieldset: "UIFieldset",
-  legend: "UILabel",
-  datalist: "UIDataList",
-  output: "UILabel",
-  progress: "UIProgress",
-  meter: "UIMeter",
-  img: "UIImage",
-  video: "UIVideo",
-  audio: "UIAudio",
-  table: "UITable",
-  tr: "UITableRow",
-  td: "UITableCell",
-  th: "UITableCell",
-  caption: "UILabel",
-  a: "UILink",
-  canvas: "UICanvas",
-  svg: "UISVG",
-  iframe: "UIFrame",
-  picture: "UIPicture",
-  map: "UIMap",
-  area: "UIMapArea",
-  object: "UIObject",
-  embed: "UIEmbed",
-  param: "UIParam",
-  figure: "UIFigure",
-  figcaption: "UILabel"
+  html: "SLContainer",
+  body: "SLContainer",
+  div: "SLContainer",
+  section: "SLContainer",
+  header: "SLHeader",
+  footer: "SLFooter",
+  article: "SLArticle",
+  aside: "SLSidebar",
+  nav: "SLNavigation",
+  ul: "SLList",
+  ol: "SLList",
+  li: "SLListItem",
+  span: "SLLabel",
+  p: "SLLabel",
+  h1: "SLTitle",
+  h2: "SLSubtitle",
+  h3: "SLLabel",
+  h4: "SLLabel",
+  h5: "SLLabel",
+  h6: "SLLabel",
+  button: "SLButton",
+  input: "SLTextField",
+  textarea: "SLTextArea",
+  select: "SLDropdown",
+  option: "SLOption",
+  checkbox: "SLCheckbox",
+  radio: "SLRadioButton",
+  form: "SLForm",
+  label: "SLLabel",
+  fieldset: "SLFieldset",
+  legend: "SLLabel",
+  img: "SLImage",
+  video: "SLVideo",
+  table: "SLTable",
+  tr: "SLTableRow",
+  td: "SLTableCell",
+  th: "SLTableCell",
+  a: "SLLink",
+  canvas: "SLCanvas",
+  svg: "SLSVG",
+  path: "SLSVGPath",
+  circle: "SLSVGCircle",
+  rect: "SLSVGRect",
+  line: "SLSVGLine",
+  polyline: "SLSVGPolyline",
+  polygon: "SLSVGPolygon",
+  text: "SLSVGText",
+  g: "SLSVGGroup",
+  iframe: "SLFrame",
+  picture: "SLPicture",
+  map: "SLMap",
+  area: "SLMapArea",
+  object: "SLObject",
+  embed: "SLEmbed",
+  param: "SLParam",
+  figure: "SLFigure",
+  figcaption: "SLLabel",
+  progress: "SLProgress",
+  meter: "SLMeter",
+  datalist: "SLDataList",
+  output: "SLLabel",
+  blockquote: "SLBlockquote",
+  pre: "SLPre",
+  code: "SLCode",
+  small: "SLLabel",
+  strong: "SLLabel",
+  em: "SLLabel",
+  mark: "SLLabel",
+  hr: "SLDivider",
+  time: "SLLabel",
+  summary: "SLLabel",
+  details: "SLDetails"
+
 };
 
 class Token {
@@ -79,6 +97,7 @@ class Lexer {
 
   tokenize() {
     const tokens = [];
+
     while (this.position < this.input.length) {
       let char = this.input[this.position];
 
@@ -88,17 +107,16 @@ class Lexer {
       }
 
       if (this.isLetter(char)) {
-  let value = "";
-  while (
-    this.position < this.input.length &&
-    /[a-zA-Z0-9_.]/.test(this.input[this.position])
-  ) {
-    value += this.input[this.position++];
-  }
-  tokens.push(new Token("IDENTIFIER", value));
-  continue;
-}
-
+        let value = "";
+        while (
+          this.position < this.input.length &&
+          /[a-zA-Z0-9_.]/.test(this.input[this.position])
+        ) {
+          value += this.input[this.position++];
+        }
+        tokens.push(new Token("IDENTIFIER", value));
+        continue;
+      }
 
       if (char === '"') {
         this.position++;
@@ -131,6 +149,7 @@ class Lexer {
 
       this.position++;
     }
+
     return tokens;
   }
 }
@@ -145,21 +164,15 @@ class Parser {
     return this.tokens[this.position];
   }
 
+  peek(offset = 1) {
+    return this.tokens[this.position + offset];
+  }
+
   eat(type) {
     const token = this.current();
     if (!token) throw new Error(`Unexpected end of input, expected ${type}`);
     if (type && token.type !== type) {
       throw new Error(`Expected ${type}, got ${token.type}`);
-    }
-    this.position++;
-    return token;
-  }
-
-  expectAny(...types) {
-    const token = this.current();
-    if (!token) throw new Error(`Unexpected end of input, expected one of: ${types.join(", ")}`);
-    if (!types.includes(token.type)) {
-      throw new Error(`Expected one of [${types.join(", ")}], got ${token.type}`);
     }
     this.position++;
     return token;
@@ -176,36 +189,64 @@ class Parser {
   parseElement() {
     const name = this.eat("IDENTIFIER").value;
     const props = {};
-    while (this.current() && this.current().type === "IDENTIFIER") {
+
+    while (
+      this.current() &&
+      this.current().type === "IDENTIFIER"
+    ) {
+      const keyToken = this.current();
+      const next = this.peek();
+
+      if (!next || next.type !== "EQUALS") {
+        props[keyToken.value] = true;
+        this.eat("IDENTIFIER");
+        continue;
+      }
+
       const key = this.eat("IDENTIFIER").value;
       this.eat("EQUALS");
-      const valueToken = this.expectAny("IDENTIFIER", "STRING", "LBRACE");
 
-      if (valueToken.type === "LBRACE") {
+      const valueToken = this.current();
+
+      if (!valueToken) break;
+
+      if (valueToken.type === "STRING") {
+        props[key] = this.eat("STRING").value;
+      }
+
+      else if (valueToken.type === "IDENTIFIER") {
+        props[key] = this.eat("IDENTIFIER").value;
+      }
+
+      else if (valueToken.type === "LBRACE") {
+        this.eat("LBRACE");
+
         let expr = "";
-        while (this.current().type !== "RBRACE") {
-          expr += this.eat("IDENTIFIER").value;
+        while (this.current() && this.current().type !== "RBRACE") {
+          expr += this.eat(this.current().type).value || "";
         }
+
         this.eat("RBRACE");
         props[key] = `{${expr}}`;
-      } else {
-        props[key] = valueToken.value;
       }
     }
 
     let children = [];
 
     if (this.current() && this.current().type === "STRING") {
-      const textValue = this.eat("STRING").value;
-      children.push({ type: "Text", value: textValue });
+      children.push({
+        type: "Text",
+        value: this.eat("STRING").value
+      });
       return { type: "Element", name, props, children };
     }
-
     if (this.current() && this.current().type === "LBRACE") {
       this.eat("LBRACE");
-      while (this.current().type !== "RBRACE") {
+
+      while (this.current() && this.current().type !== "RBRACE") {
         children.push(this.parseElement());
       }
+
       this.eat("RBRACE");
     }
 
@@ -224,43 +265,51 @@ class CodeGenerator {
 
       case "Text":
         return this.transformText(node.value);
-
-      default:
-        throw new Error("Unknown node type: " + node.type);
     }
   }
 
   transformText(text) {
     if (text.includes("{")) {
-      const replaced = text.replace(/\{(.*?)\}/g, "${$1}");
-      return `\`${replaced}\``;
-    } else {
-      return `"${text}"`;
+      return `\`${text.replace(/\{(.*?)\}/g, "${$1}")}\``;
     }
+    return `"${text}"`;
   }
 
   generateElement(node) {
-  const mappedTag = viewTags[node.name] || node.name;
+    const mappedTag = viewTags[node.name] || node.name;
 
-  // Generate props
-  let propsParts = [];
-  for (let key in node.props) {
-    const value = node.props[key];
-    if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
-      // Inject as JS expression
-      propsParts.push(`${key}: ${value.slice(1, -1)}`);
-    } else {
-      propsParts.push(`${key}: ${JSON.stringify(value)}`);
+    let propsParts = [];
+
+    for (let key in node.props) {
+      const value = node.props[key];
+
+      if (value === true) {
+        propsParts.push(`${key}: true`);
+      }
+
+      else if (
+        typeof value === "string" &&
+        value.startsWith("{") &&
+        value.endsWith("}")
+      ) {
+        propsParts.push(`${key}: ${value.slice(1, -1)}`);
+      }
+
+      else {
+        propsParts.push(`${key}: ${JSON.stringify(value)}`);
+      }
     }
+
+    const propsString = `{ ${propsParts.join(", ")} }`;
+
+    const children = node.children
+      .map(c => this.generate(c))
+      .join(", ");
+
+    return `createElement("${mappedTag}", ${propsString}${
+      children ? ", " + children : ""
+    })`;
   }
-  const propsString = `{ ${propsParts.join(", ")} }`;
-
-  // Children
-  const children = node.children.map(c => this.generate(c)).join(", ");
-
-  return `createElement("${mappedTag}", ${propsString}${children ? ", " + children : ""})`;
-}
-
 }
 
 export class HTMLCompiler {
@@ -275,7 +324,11 @@ export class HTMLCompiler {
 }
 
 export function createElement(type, props, ...children) {
-  return { type, props: props || {}, children: children.flat() };
+  return {
+    type,
+    props: props || {},
+    children: children.flat()
+  };
 }
 
 export default HTMLCompiler;
