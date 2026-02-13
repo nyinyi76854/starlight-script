@@ -5,23 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Starlight</title>
 
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #0f172a;
+      color: #fff;
     }
 
-    h1 {
-      padding: 10px;
-      background: #222;
-      color: #fff;
-      margin: 0;
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: #020617;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .run-btn {
+      background: #22c55e;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .run-btn i {
+      margin-right: 6px;
+    }
+
+    .run-btn:hover {
+      background: #16a34a;
     }
 
     .layout {
       display: flex;
-      height: 60vh;
+      height: calc(100vh - 50px);
     }
 
     .panel {
@@ -33,66 +62,51 @@
     textarea {
       width: 100%;
       height: 100%;
-      font-family: monospace;
+      font-family: "Fira Code", monospace;
       font-size: 14px;
-      padding: 10px;
+      padding: 12px;
       border: none;
       outline: none;
       resize: none;
-      background: #1e1e1e;
-      color: #00ffcc;
+      background: #020617;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    textarea::selection {
+      background: #334155;
     }
 
     #output {
-      background: white;
-      border-left: 2px solid #ddd;
+      background: #ffffff;
+      color: #000;
+      border-left: 1px solid #1e293b;
       overflow: auto;
-    }
-
-    #console {
-      height: 30vh;
-      background: #111;
-      color: #0f0;
-      padding: 10px;
-      font-family: monospace;
-      overflow: auto;
-    }
-
-    button {
-      padding: 8px 12px;
-      margin: 10px;
-      cursor: pointer;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-<button id="runBtn">▶ Run</button>
+
+<div class="topbar">
+  <div class="title">Starlight Frontend</div>
+  <button class="run-btn" id="runBtn">
+    <i class="fas fa-play"></i> Run
+  </button>
+</div>
 
 <div class="layout">
-  <!-- Code Editor -->
+  <!-- Editor -->
   <div class="panel">
     <textarea id="editor">
-// Write SL code here
-
 function App() {
   return SL("SLContainerView", { style: { padding: "20px", textAlign: "center" } },
 
-    SL("SLHeader1", {}, "Hello Starlight"),
+    SL("SLHeader1", {}, "Welcome to Starlight Frontend Language"),
 
-    SL("SLTextView", {}, "Click the button"),
-
-    SL("SLButton", {
-      onClick: () => alert("Clicked! 🎉")
-    }, "Click Me"),
-
-    SL("SLImageView", {
-      src: "https://via.placeholder.com/150",
-      style: { marginTop: "10px" }
-    })
+    SL("SLTextView", { style: { marginTop: "10px" } },
+      "developed by Dominex Macedon."
+    )
   );
 }
 
@@ -104,46 +118,34 @@ run(App, document.getElementById("output"));
   <div class="panel" id="output"></div>
 </div>
 
-<!-- Console -->
-<div id="console"></div>
-
 <script type="module">
   import * as SLRuntime from './starlight-interpreter.js';
 
   const editor = document.getElementById('editor');
   const output = document.getElementById('output');
-  const consoleBox = document.getElementById('console');
   const runBtn = document.getElementById('runBtn');
 
-  function log(msg) {
-    consoleBox.textContent += msg + "\\n";
-  }
-
   function runCode() {
-    consoleBox.textContent = '';
     output.innerHTML = '';
 
     try {
       const userCode = editor.value;
 
-      // Create function with runtime injected
       const fn = new Function(
         ...Object.keys(SLRuntime),
         userCode
       );
 
       fn(...Object.values(SLRuntime));
-
-      log("✅ Code executed successfully");
     } catch (err) {
-      log("❌ Error: " + err.message);
+      output.innerHTML = '<span style="color:red;">Error: ' + err.message + '</span>';
       console.error(err);
     }
   }
 
   runBtn.addEventListener('click', runCode);
 
-  // Run initially
+  // Auto run on load
   runCode();
 </script>
 
