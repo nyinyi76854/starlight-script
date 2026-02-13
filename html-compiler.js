@@ -279,21 +279,21 @@ class CodeGenerator {
   }
 
   generateStyleSheet(node) {
-    const styles = {};
-    for (const child of node.children) {
-      const key = child.name;
-      styles[key] = {};
-      for (const prop in child.props) {
-        const val = child.props[prop];
-        if (typeof val === "string" && val.startsWith("{") && val.endsWith("}")) {
-          styles[key][prop] = val.slice(1, -1);
-        } else {
-          styles[key][prop] = val;
-        }
+  const styles = {};
+  for (const child of node.children) {
+    const key = child.name;
+    styles[key] = {};
+    for (const prop in child.props) {
+      const val = child.props[prop];
+      if (typeof val === "string" && val.startsWith("{") && val.endsWith("}")) {
+        styles[key][prop] = val.slice(1, -1);
+      } else {
+        styles[key][prop] = val;
       }
     }
-    return `const styles = ${JSON.stringify(styles, null, 2)}`;
   }
+  return JSON.stringify(styles, null, 2);
+}
 
   generateElement(node) {
     const mappedTag = viewTags[node.name] || node.name;
