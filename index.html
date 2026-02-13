@@ -1,118 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SL Dynamic Compiler</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Starlight</title>
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { margin-bottom: 20px; }
-    .container { display: flex; gap: 20px; margin-bottom: 20px; }
-    textarea { width: 100%; height: 200px; font-family: monospace; font-size: 14px; padding: 10px; }
-    .box { border: 1px solid #ccc; border-radius: 5px; padding: 10px; flex: 1; min-height: 200px; overflow: auto; background: #f9f9f9; }
-    #compiledJS { margin-top: 20px; height: 150px; }
-    .btn-compile { margin-top: 10px; padding: 8px 12px; background: #007BFF; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-    .btn-compile:hover { background: #0056b3; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      padding: 10px;
+      background: #222;
+      color: #fff;
+      margin: 0;
+    }
+
+    .layout {
+      display: flex;
+      height: 60vh;
+    }
+
+    .panel {
+      flex: 1;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px;
+      border: none;
+      outline: none;
+      resize: none;
+      background: #1e1e1e;
+      color: #00ffcc;
+    }
+
+    #output {
+      background: white;
+      border-left: 2px solid #ddd;
+      overflow: auto;
+    }
+
+    #console {
+      height: 30vh;
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      font-family: monospace;
+      overflow: auto;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 10px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
-  <h1>SL Dynamic Compiler</h1>
+<button id="runBtn">▶ Run</button>
 
-  <div class="container">
-    <!-- SL Code Input -->
-    <div class="box">
-      <h3>SL Code Input</h3>
-      <textarea id="slInput">// Type your SL code here
-createElement('SLContainerView', { class: 'container' },
-  createElement('SLHeader1', { class: 'main-title' }, 'Dynamic SL Demo'),
-  createElement('SLTextView', { class: 'paragraph' }, 'Click buttons below:'),
-  createElement('SLButton', { class: 'btn', 'data-action': 'hello' }, 'Say Hello'),
-  createElement('SLButton', { class: 'btn', 'data-action': 'bye' }, 'Say Bye')
-)</textarea>
-      <button class="btn-compile" id="compileBtn">Compile</button>
-    </div>
+<div class="layout">
+  <!-- Code Editor -->
+  <div class="panel">
+    <textarea id="editor">
+// Write SL code here
 
-    <!-- Rendered HTML Output -->
-    <div class="box" id="renderedOutput">
-      <h3>Rendered Output</h3>
-    </div>
+function App() {
+  return SL("SLContainerView", { style: { padding: "20px", textAlign: "center" } },
+
+    SL("SLHeader1", {}, "Hello Starlight"),
+
+    SL("SLTextView", {}, "Click the button"),
+
+    SL("SLButton", {
+      onClick: () => alert("Clicked! 🎉")
+    }, "Click Me"),
+
+    SL("SLImageView", {
+      src: "https://via.placeholder.com/150",
+      style: { marginTop: "10px" }
+    })
+  );
+}
+
+run(App, document.getElementById("output"));
+    </textarea>
   </div>
 
-  <!-- Compiled JS Output -->
-  <div class="box" id="compiledJS">
-    <h3>Compiled JS</h3>
-    <pre id="jsOutput"></pre>
-  </div>
+  <!-- Output -->
+  <div class="panel" id="output"></div>
+</div>
 
-  <script type="module">
-    import { createElement, StyleSheet } from './compiler.js';
-    import htmlMap from './html-map.js';
+<!-- Console -->
+<div id="console"></div>
 
-    // Apply dynamic stylesheet from compiler.js if exists
-    if (StyleSheet && typeof StyleSheet === 'string') {
-      const styleEl = document.createElement('style');
-      styleEl.textContent = StyleSheet;
-      document.head.appendChild(styleEl);
+<script type="module">
+  import * as SLRuntime from './starlight-interpreter.js';
+
+  const editor = document.getElementById('editor');
+  const output = document.getElementById('output');
+  const consoleBox = document.getElementById('console');
+  const runBtn = document.getElementById('runBtn');
+
+  function log(msg) {
+    consoleBox.textContent += msg + "\\n";
+  }
+
+  function runCode() {
+    consoleBox.textContent = '';
+    output.innerHTML = '';
+
+    try {
+      const userCode = editor.value;
+
+      // Create function with runtime injected
+      const fn = new Function(
+        ...Object.keys(SLRuntime),
+        userCode
+      );
+
+      fn(...Object.values(SLRuntime));
+
+      log("✅ Code executed successfully");
+    } catch (err) {
+      log("❌ Error: " + err.message);
+      console.error(err);
     }
+  }
 
-    // Compile SL to HTML string
-    function compileSL(sl) {
-      if (typeof sl === 'string' || typeof sl === 'number') return sl;
-      const tag = htmlMap[sl.type] || 'div';
-      let attrs = '';
-      if (sl.props) {
-        attrs = Object.entries(sl.props)
-          .map(([k,v]) => `${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}="${v}"`)
-          .join(' ');
-        if (attrs) attrs = ' ' + attrs;
-      }
-      const children = (sl.children || []).map(c => typeof c === 'string' ? c : compileSL(c)).join('');
-      const selfClosing = ['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'];
-      if (selfClosing.includes(tag)) return `<${tag}${attrs}>`;
-      return `<${tag}${attrs}>${children}</${tag}>`;
-    }
+  runBtn.addEventListener('click', runCode);
 
-    // Render SL tree and attach dynamic click events
-    function renderSLTree(slTree, outputEl) {
-      outputEl.innerHTML = compileSL(slTree);
+  // Run initially
+  runCode();
+</script>
 
-      // Automatically attach click events to all buttons with data-action
-      const buttons = outputEl.querySelectorAll('button[data-action]');
-      buttons.forEach(btn => {
-        btn.onclick = () => {
-          const action = btn.getAttribute('data-action');
-          if (action === 'hello') alert('Hello! 👋');
-          else if (action === 'bye') alert('Goodbye! 👋');
-          else alert(`Button clicked: ${action}`);
-        };
-      });
-    }
-
-    // Compile button
-    const compileBtn = document.getElementById('compileBtn');
-    compileBtn.addEventListener('click', () => {
-      const slInput = document.getElementById('slInput').value;
-      const renderedOutput = document.getElementById('renderedOutput');
-      const jsOutput = document.getElementById('jsOutput');
-
-      try {
-        // Evaluate SL code dynamically
-        const slTree = eval(slInput);
-
-        // Render HTML
-        renderSLTree(slTree, renderedOutput);
-
-        // Show compiled JS
-        jsOutput.textContent = JSON.stringify(slTree, null, 2);
-      } catch (err) {
-        renderedOutput.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
-        jsOutput.textContent = '';
-        console.error(err);
-      }
-    });
-
-    // Initial compile
-    compileBtn.click();
-  </script>
 </body>
 </html>
