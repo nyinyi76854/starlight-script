@@ -66,19 +66,9 @@
       <h3>DSL Input</h3>
       <textarea id="dsl">
 StyleSheet {
-  container: {
-    padding: 20,
-    backgroundColor: "#f5f5f5"
-  },
-  title: {
-    fontSize: 24,
-    color: "blue"
-  },
-  button: {
-    padding: 10,
-    backgroundColor: "black",
-    color: "white"
-  }
+  container: { padding: 20, backgroundColor: "#f5f5f5" },
+  title: { fontSize: 24, color: "blue" },
+  button: { padding: 10, backgroundColor: "black", color: "white" }
 }
 
 SLContainer style={styles.container} {
@@ -110,23 +100,20 @@ SLContainer style={styles.container} {
 
     window.runDSL = function () {
       const dsl = document.getElementById("dsl").value;
-
       const compiler = new HTMLCompiler();
       const compiledCode = compiler.compile(dsl);
 
       document.getElementById("compiled").textContent = compiledCode;
-
       const app = document.getElementById("app");
       app.innerHTML = "";
 
       try {
         const runtime = Core;
-
         let username = "";
 
         function setUsername(value) {
           username = value;
-          runDSL(); // Re-render on input
+          runDSL(); // Re-render
         }
 
         function handleClick() {
@@ -135,229 +122,31 @@ SLContainer style={styles.container} {
 
         let styles = {};
 
-        if (dsl.includes("StyleSheet")) {
-          // StyleSheet is now compiled to `styles` object
-          const styleFunc = new Function("return " + compiledCode.split("SLContainer")[0]);
-          styles = styleFunc();
+        // Extract StyleSheet code
+        const styleMatch = compiledCode.match(/createElement\("StyleSheet".*?\)/s);
+        if (styleMatch) {
+          const styleCode = styleMatch[0]
+            .replace(/^createElement\("StyleSheet",\s*\{\s*\},\s*/, "")
+            .replace(/\)\s*$/, "");
+
+          // Evaluate safely
+          styles = new Function("return {" + styleCode + "}")();
         }
 
+        // Remove StyleSheet from compiled code
+        const viewCode = compiledCode.replace(/createElement\("StyleSheet".*?\)\s*,?/s, "");
+
+        // Execute remaining SL view code
         const func = new Function(
           "createElement",
-          "render",
-          "signal",
-          "mountComponent",
-          "renderElement",
-          "useState",
-          "effect",
-          "registerRoute",
-          "navigate",
-          "Router",
-          "renderToString",
-          "hydrate",
-          "defineComponent",
-          "Builder",
-          "useEffect",
-          "useLayoutEffect",
-          "useCleanup",
-          "useAnimation",
-          "animate",
-          "useGesture",
-          "Fragment",
-          "Portal",
-          "Suspense",
-          "lazy",
-          "createContext",
-          "useContext",
-          "cloneElement",
-          "isValidElement",
-          "mergeProps",
-          "useFetch",
-          "useResource",
-          "createStore",
-          "useDebug",
-          "DevTools",
-          "SuspenseBoundary",
-          "Link",
-          "Redirect",
-          "useParams",
-          "useQuery",
-          "spring",
-          "transition",
-          "useTransition",
-          "useForm",
-          "useField",
-          "Form",
-          "Input",
-          "TextArea",
-          "Select",
-          "memo",
-          "forwardRef",
-          "useRef",
-          "ErrorBoundary",
-          "renderToNodeStream",
-          "hydrateRoot",
-          "Profiler",
-          "useLogger",
-          "DevInspector",
-          "batch",
-          "nextTick",
-          "isServer",
-          "isClient",
-          "SuspenseList",
-          "lazyWithPreload",
-          "useReducer",
-          "useStore",
-          "useSpring",
-          "useTransitionGroup",
-          "useDrag",
-          "useSwipe",
-          "useImperativeHandle",
-          "lazyComponentWrapper",
-          "withErrorBoundary",
-          "renderToStaticMarkup",
-          "hydrateStreaming",
-          "traceUpdates",
-          "useProfiler",
-          "classNames",
-          "mergeStyles",
-          "composeRefs",
-          "useHistory",
-          "useLocation",
-          "useMatch",
-          "RedirectTo",
-          "useMemo",
-          "useCallback",
-          "useDeferredValue",
-          "useId",
-          "motion",
-          "AnimatePresence",
-          "catchError",
-          "onError",
-          "useValidator",
-          "Controller",
-          "traceRenders",
-          "useInspector",
-          "useSafeAreaInsets",
-          "useKeyboard",
-          "Dimensions",
-          "cloneVNode",
-          "shallowEqual",
-          "defer",
           "styles",
           "username",
           "setUsername",
           "handleClick",
-          `return ${compiledCode.split("SLContainer").slice(1).join("SLContainer")}`
+          `return ${viewCode}`
         );
 
-        const vnode = func(
-          runtime.createElement,
-          runtime.render,
-          runtime.signal,
-          runtime.mountComponent,
-          runtime.renderElement,
-          runtime.useState,
-          runtime.effect,
-          runtime.registerRoute,
-          runtime.navigate,
-          runtime.Router,
-          runtime.renderToString,
-          runtime.hydrate,
-          runtime.defineComponent,
-          runtime.Builder,
-          runtime.useEffect,
-          runtime.useLayoutEffect,
-          runtime.useCleanup,
-          runtime.useAnimation,
-          runtime.animate,
-          runtime.useGesture,
-          runtime.Fragment,
-          runtime.Portal,
-          runtime.Suspense,
-          runtime.lazy,
-          runtime.createContext,
-          runtime.useContext,
-          runtime.cloneElement,
-          runtime.isValidElement,
-          runtime.mergeProps,
-          runtime.useFetch,
-          runtime.useResource,
-          runtime.createStore,
-          runtime.useDebug,
-          runtime.DevTools,
-          runtime.SuspenseBoundary,
-          runtime.Link,
-          runtime.Redirect,
-          runtime.useParams,
-          runtime.useQuery,
-          runtime.spring,
-          runtime.transition,
-          runtime.useTransition,
-          runtime.useForm,
-          runtime.useField,
-          runtime.Form,
-          runtime.Input,
-          runtime.TextArea,
-          runtime.Select,
-          runtime.memo,
-          runtime.forwardRef,
-          runtime.useRef,
-          runtime.ErrorBoundary,
-          runtime.renderToNodeStream,
-          runtime.hydrateRoot,
-          runtime.Profiler,
-          runtime.useLogger,
-          runtime.DevInspector,
-          runtime.batch,
-          runtime.nextTick,
-          runtime.isServer,
-          runtime.isClient,
-          runtime.SuspenseList,
-          runtime.lazyWithPreload,
-          runtime.useReducer,
-          runtime.useStore,
-          runtime.useSpring,
-          runtime.useTransitionGroup,
-          runtime.useDrag,
-          runtime.useSwipe,
-          runtime.useImperativeHandle,
-          runtime.lazyComponentWrapper,
-          runtime.withErrorBoundary,
-          runtime.renderToStaticMarkup,
-          runtime.hydrateStreaming,
-          runtime.traceUpdates,
-          runtime.useProfiler,
-          runtime.classNames,
-          runtime.mergeStyles,
-          runtime.composeRefs,
-          runtime.useHistory,
-          runtime.useLocation,
-          runtime.useMatch,
-          runtime.RedirectTo,
-          runtime.useMemo,
-          runtime.useCallback,
-          runtime.useDeferredValue,
-          runtime.useId,
-          runtime.motion,
-          runtime.AnimatePresence,
-          runtime.catchError,
-          runtime.onError,
-          runtime.useValidator,
-          runtime.Controller,
-          runtime.traceRenders,
-          runtime.useInspector,
-          runtime.useSafeAreaInsets,
-          runtime.useKeyboard,
-          runtime.Dimensions,
-          runtime.cloneVNode,
-          runtime.shallowEqual,
-          runtime.defer,
-          styles,
-          username,
-          setUsername,
-          handleClick
-        );
-
+        const vnode = func(runtime.createElement, styles, username, setUsername, handleClick);
         const dom = runtime.renderElement(vnode);
         app.appendChild(dom);
 
