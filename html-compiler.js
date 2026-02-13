@@ -88,16 +88,17 @@ class Lexer {
       }
 
       if (this.isLetter(char)) {
-        let value = "";
-        while (
-          this.position < this.input.length &&
-          /[a-zA-Z0-9_]/.test(this.input[this.position])
-        ) {
-          value += this.input[this.position++];
-        }
-        tokens.push(new Token("IDENTIFIER", value));
-        continue;
-      }
+  let value = "";
+  while (
+    this.position < this.input.length &&
+    /[a-zA-Z0-9_.]/.test(this.input[this.position])
+  ) {
+    value += this.input[this.position++];
+  }
+  tokens.push(new Token("IDENTIFIER", value));
+  continue;
+}
+
 
       if (char === '"') {
         this.position++;
