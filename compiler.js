@@ -43,7 +43,13 @@ export function useState(initial) {
 
   return component.state[index];
 }
-
+export function createElement(type, props, ...children) {
+  return {
+    type,
+    props: props || {},
+    children: children.flat()
+  };
+}
 export function mountComponent(vnode) {
   const prevComponent = currentComponent;
   const component = {
