@@ -1,169 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Starlight Android DSL Playground</title>
+  <meta charset="UTF-8">
+  <title>Starlight React Native + StyleSheet Demo</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 20px;
+      background: #f4f6f8;
+    }
 
-<style>
-body {
-  font-family: "Segoe UI", sans-serif;
-  margin: 0;
-  padding: 20px;
-  background: #f4f6f8;
-}
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
 
-.section {
-  background: white;
-  padding: 18px;
-  margin-bottom: 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
+    /* Basic fallback for custom tags */
+    UIContainer, UIHeader, UILabel, UIButton, UITitle {
+      display: block;
+    }
 
-textarea {
-  width: 100%;
-  height: 180px;
-  font-family: monospace;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
+    UIButton {
+      cursor: pointer;
+    }
 
-button {
-  margin-top: 12px;
-  padding: 10px 18px;
-  background: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-pre {
-  background: #f0f0f0;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
-}
-
-#output {
-  min-height: 150px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 10px;
-  background: #fff;
-}
-
-UIContainer, UILabel, UIButton, UITitle {
-  display: block;
-}
-
-UIButton {
-  cursor: pointer;
-}
-</style>
+    pre {
+      background: #f0f0f0;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+  </style>
 </head>
-
 <body>
+  <h1>Starlight React Native + StyleSheet Demo</h1>
 
-<div class="section">
-  <h2>Starlight DSL</h2>
-  <textarea id="dsl"></textarea>
-  <button id="run">Run</button>
-</div>
+  <div id="app"></div>
 
-<div class="section">
-  <h2>Compiled JavaScript</h2>
-  <pre id="compiled"></pre>
-</div>
+  <div>
+    <h2>Compiled DSL</h2>
+    <pre id="compiled"></pre>
+  </div>
 
-<div class="section">
-  <h2>Android View</h2>
-  <div id="output"></div>
-</div>
+  <script type="module">
+    import HTMLCompiler from "./html-compiler.js";
+    import Starlight, { createElement, render, StyleSheet } from "./compiler.js";
 
-<script type="module">
-import HTMLCompiler from "./html-compiler.js";
-import Starlight, {
-  createElement,
-  render,
-  signal,
-  StyleSheet
-} from "./compiler.js";
+    // -------------------------------
+    // Define StyleSheet
+    // -------------------------------
+    const styles = StyleSheet({
+      container: {
+        padding: "20px",
+        borderRadius: "10px",
+        backgroundColor: "#e3f2fd",
+        marginBottom: "10px"
+      },
+      header: {
+        fontSize: "20px",
+        fontWeight: "bold",
+        marginBottom: "8px"
+      },
+      text: {
+        fontSize: "16px",
+        marginBottom: "6px"
+      },
+      button: {
+        padding: "8px 14px",
+        backgroundColor: "#2196F3",
+        color: "white",
+        borderRadius: "6px",
+        margin: "4px 2px"
+      }
+    });
 
-const dslInput = document.getElementById("dsl");
-const compiledEl = document.getElementById("compiled");
-const outputEl = document.getElementById("output");
-const runBtn = document.getElementById("run");
-
-// Reactive signal (NO hooks)
-const count = signal(0);
-
-// Styles
-const styles = StyleSheet({
-  container: {
-    padding: "20px",
-    border: "2px solid #2196F3",
-    borderRadius: "10px",
-    backgroundColor: "#e3f2fd"
-  },
-  button: {
-    padding: "8px 14px",
-    backgroundColor: "#2196F3",
-    color: "white",
-    borderRadius: "6px"
-  }
-});
-
-function runDSL() {
-  try {
-    const compiler = new HTMLCompiler();
-    const code = compiler.compile(dslInput.value);
-
-    compiledEl.textContent = code;
-
-    const fn = new Function(
-      "createElement",
-      "styles",
-      "count",
-      `return ${code}`
-    );
-
-    const tree = fn(createElement, styles, count);
-
-    outputEl.innerHTML = "";
-
-    // Wrap DSL tree manually (no hooks)
-    const root = createElement(
-      "UIContainer",
-      { style: styles.container },
-      tree,
-      createElement(
-        "UIButton",
-        {
-          style: styles.button,
-          onClick: () => count.value++
-        },
-        "Increase Count"
-      ),
-      createElement(
-        "UILabel",
-        {},
-        () => `Count: ${count.value}`
-      )
-    );
-
-    render(root, outputEl);
-
-  } catch (err) {
-    compiledEl.textContent = err.message;
-    outputEl.innerHTML = "<p style='color:red;'>Error rendering</p>";
-    console.error(err);
+    // -------------------------------
+    // DSL Code that uses the StyleSheet
+    // -------------------------------
+    const dslCode = `
+UIContainer style={styles.container} {
+  UIHeader style={styles.header} "Welcome to Starlight"
+  UIContainer style={styles.container} {
+    UILabel style={styles.text} "This is a React Native-like DSL"
+    UIButton style={styles.button} "Click Me"
+    UIButton style={styles.button} "Another Button"
   }
 }
+    `;
 
-runBtn.addEventListener("click", runDSL);
-</script>
+    // -------------------------------
+    // Compile DSL to JS
+    // -------------------------------
+    const compiler = new HTMLCompiler();
+    const compiledCode = compiler.compile(dslCode);
+    document.getElementById("compiled").textContent = compiledCode;
 
+    // -------------------------------
+    // Render DSL
+    // -------------------------------
+    const appRoot = document.getElementById("app");
+
+    // Use Function constructor to pass styles into DSL
+    const fn = new Function("createElement", "styles", `return ${compiledCode}`);
+    const vnode = fn(Starlight.createElement, styles);
+
+    render(vnode, appRoot);
+  </script>
 </body>
 </html>
