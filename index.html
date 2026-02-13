@@ -77,12 +77,44 @@
       background: #334155;
     }
 
-    #output {
-      background: #ffffff;
-      color: #000;
-      border-left: 1px solid #1e293b;
+    /* 📱 Phone Frame */
+    .phone-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .phone {
+      width: 360px;
+      height: 640px;
+      background: #000;
+      border-radius: 25px;
+      padding: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      position: relative;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 18px;
       overflow: auto;
-      border-radius: 6px;
+      color: #000;
+    }
+
+    /* Optional notch */
+    .notch {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 20px;
+      background: #000;
+      border-radius: 10px;
+      z-index: 10;
     }
   </style>
 </head>
@@ -106,7 +138,12 @@ function App() {
 
     SL("SLTextView", { style: { marginTop: "10px" } },
       "developed by Dominex Macedon."
-    )
+    ),
+
+    SL("SLButton", {
+      style: { marginTop: "20px", padding: "10px" },
+      onClick: () => alert("Hello from phone UI ")
+    }, "Click Me")
   );
 }
 
@@ -114,8 +151,15 @@ run(App, document.getElementById("output"));
     </textarea>
   </div>
 
-  <!-- Output -->
-  <div class="panel" id="output"></div>
+  <!-- Phone Output -->
+  <div class="panel">
+    <div class="phone-wrapper">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen" id="output"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -145,7 +189,6 @@ run(App, document.getElementById("output"));
 
   runBtn.addEventListener('click', runCode);
 
-  // Auto run on load
   runCode();
 </script>
 
