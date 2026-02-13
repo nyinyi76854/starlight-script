@@ -19,14 +19,22 @@ export function signal(initialValue) {
 
 export function effect(fn) {
   activeEffect = fn;
-  fn();
+  fn();               
   activeEffect = null;
 }
 
 let currentComponent = null;
 
 export function useState(initial) {
+  if (!currentComponent) {
+    throw new Error("useState must be called inside a component");
+  }
+
   const component = currentComponent;
+
+  if (component.stateIndex === undefined) component.stateIndex = 0;
+  if (!component.state) component.state = [];
+
   const index = component.stateIndex++;
 
   if (!component.state[index]) {
@@ -36,25 +44,25 @@ export function useState(initial) {
   return component.state[index];
 }
 
-export function createElement(type, props, ...children) {
-  return {
-    type,
-    props: props || {},
-    children: children.flat()
+export function mountComponent(vnode) {
+  const prevComponent = currentComponent;
+  const component = {
+    vnode,
+    state: [],
+    stateIndex: 0,
+    effects: []
   };
-}
-function setProps(dom, props) {
-  for (let key in props) {
-    if (key.startsWith("on")) {
-      const event = key.slice(2).toLowerCase();
-      dom.addEventListener(event, props[key]);
-    } else {
-      dom.setAttribute(key, props[key]);
-    }
-  }
+
+  currentComponent = component;
+  const rendered = vnode.type(vnode.props || {});
+
+  currentComponent = prevComponent; 
+  return renderElement(rendered);
 }
 
-function renderElement(vnode) {
+export function renderElement(vnode) {
+  if (vnode == null || vnode === false) return document.createTextNode("");
+
   if (typeof vnode === "string" || typeof vnode === "number") {
     return document.createTextNode(vnode);
   }
@@ -64,14 +72,33 @@ function renderElement(vnode) {
   }
 
   const dom = document.createElement(vnode.type);
-  setProps(dom, vnode.props);
+  if (vnode.props) setProps(dom, vnode.props);
 
-  vnode.children.forEach(child => {
-    dom.appendChild(renderElement(child));
-  });
+  if (vnode.children) {
+    vnode.children.forEach(child => {
+      dom.appendChild(renderElement(child));
+    });
+  }
 
   return dom;
 }
+
+function setProps(dom, props) {
+  for (let key in props) {
+    if (!props.hasOwnProperty(key)) continue;
+    const value = props[key];
+
+    if (key === "style" && typeof value === "object") {
+      Object.assign(dom.style, value);
+    } else if (key.startsWith("on") && typeof value === "function") {
+      const event = key.slice(2).toLowerCase();
+      dom.addEventListener(event, value);
+    } else {
+      dom.setAttribute(key, value);
+    }
+  }
+}
+
 function diff(parent, newVNode, oldVNode, index = 0) {
   if (!oldVNode) {
     parent.appendChild(renderElement(newVNode));
@@ -92,14 +119,15 @@ function diff(parent, newVNode, oldVNode, index = 0) {
   }
 
   if (newVNode.type) {
-    const newLength = newVNode.children.length;
-    const oldLength = oldVNode.children.length;
+    const newChildren = newVNode.children || [];
+    const oldChildren = oldVNode.children || [];
+    const maxLength = Math.max(newChildren.length, oldChildren.length);
 
-    for (let i = 0; i < newLength || i < oldLength; i++) {
+    for (let i = 0; i < maxLength; i++) {
       diff(
         parent.childNodes[index],
-        newVNode.children[i],
-        oldVNode.children[i],
+        newChildren[i],
+        oldChildren[i],
         i
       );
     }
@@ -107,36 +135,13 @@ function diff(parent, newVNode, oldVNode, index = 0) {
 }
 
 function changed(a, b) {
-  return (
-    typeof a !== typeof b ||
-    (typeof a === "string" && a !== b) ||
-    a.type !== b.type
-  );
-}
-function mountComponent(vnode) {
-  const componentInstance = {
-    state: [],
-    stateIndex: 0,
-    vnode,
-    dom: null
-  };
+  if (typeof a !== typeof b) return true;
 
-  currentComponent = componentInstance;
-  componentInstance.stateIndex = 0;
+  if (typeof a === "string" || typeof a === "number") {
+    return a !== b;
+  }
 
-  const renderedVNode = vnode.type(vnode.props);
-
-  const dom = renderElement(renderedVNode);
-  componentInstance.dom = dom;
-
-  effect(() => {
-    const newVNode = vnode.type(vnode.props);
-    diff(dom.parentNode, newVNode, renderedVNode);
-  });
-
-  currentComponent = null;
-
-  return dom;
+  return a.type !== b.type;
 }
 const routes = {};
 
@@ -152,7 +157,6 @@ export function Router() {
   });
 
   const Component = routes[getPath()] || routes["/"];
-
   return createElement(Component, {});
 }
 
@@ -162,26 +166,25 @@ export function navigate(path) {
 }
 
 export function renderToString(vnode) {
-  if (typeof vnode === "string") return vnode;
+  if (typeof vnode === "string" || typeof vnode === "number") return vnode;
 
   if (typeof vnode.type === "function") {
     return renderToString(vnode.type(vnode.props));
   }
 
-  const propsString = Object.entries(vnode.props)
+  const propsString = Object.entries(vnode.props || {})
     .map(([k, v]) => `${k}="${v}"`)
     .join(" ");
 
-  const children = vnode.children
+  const childrenString = (vnode.children || [])
     .map(renderToString)
     .join("");
 
-  return `<${vnode.type} ${propsString}>${children}</${vnode.type}>`;
+  return `<${vnode.type} ${propsString}>${childrenString}</${vnode.type}>`;
 }
 
 export function hydrate(vnode, container) {
-  const dom = renderElement(vnode);
-  container.replaceWith(dom);
+  container.replaceWith(renderElement(vnode));
 }
 
 if (import.meta && import.meta.hot) {
@@ -190,6 +193,7 @@ if (import.meta && import.meta.hot) {
     location.reload();
   });
 }
+
 
 export function defineComponent(component, types = {}) {
   component.__types = types;
@@ -1259,6 +1263,8 @@ export default {
   createElement,
   render,
   signal,
+  mountComponent,
+  renderElement,
   useState,
   effect,
   registerRoute,
