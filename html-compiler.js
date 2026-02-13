@@ -187,79 +187,70 @@ class Parser {
   }
 
   parseElement() {
-    const nameToken = this.eat("IDENTIFIER");
-    const name = nameToken.value;
-
-    if (name === "StyleSheet") {
-      return this.parseStyleSheet();
-    }
-
+    const name = this.eat("IDENTIFIER").value;
     const props = {};
-    while (this.current() && this.current().type === "IDENTIFIER") {
+
+    while (
+      this.current() &&
+      this.current().type === "IDENTIFIER"
+    ) {
+      const keyToken = this.current();
+      const next = this.peek();
+
+      if (!next || next.type !== "EQUALS") {
+        props[keyToken.value] = true;
+        this.eat("IDENTIFIER");
+        continue;
+      }
+
       const key = this.eat("IDENTIFIER").value;
-      if (this.current() && this.current().type === "EQUALS") {
-        this.eat("EQUALS");
-        const valToken = this.current();
-        if (valToken.type === "STRING" || valToken.type === "IDENTIFIER") {
-          props[key] = this.eat(valToken.type).value;
-        } else if (valToken.type === "LBRACE") {
-          this.eat("LBRACE");
-          let expr = "";
-          while (this.current().type !== "RBRACE") {
-            expr += this.eat(this.current().type).value || "";
-          }
-          this.eat("RBRACE");
-          props[key] = `{${expr}}`;
+      this.eat("EQUALS");
+
+      const valueToken = this.current();
+
+      if (!valueToken) break;
+
+      if (valueToken.type === "STRING") {
+        props[key] = this.eat("STRING").value;
+      }
+
+      else if (valueToken.type === "IDENTIFIER") {
+        props[key] = this.eat("IDENTIFIER").value;
+      }
+
+      else if (valueToken.type === "LBRACE") {
+        this.eat("LBRACE");
+
+        let expr = "";
+        while (this.current() && this.current().type !== "RBRACE") {
+          expr += this.eat(this.current().type).value || "";
         }
-      } else {
-        props[key] = true;
+
+        this.eat("RBRACE");
+        props[key] = `{${expr}}`;
       }
     }
 
     let children = [];
+
     if (this.current() && this.current().type === "STRING") {
-      children.push({ type: "Text", value: this.eat("STRING").value });
-    } else if (this.current() && this.current().type === "LBRACE") {
+      children.push({
+        type: "Text",
+        value: this.eat("STRING").value
+      });
+      return { type: "Element", name, props, children };
+    }
+    if (this.current() && this.current().type === "LBRACE") {
       this.eat("LBRACE");
+
       while (this.current() && this.current().type !== "RBRACE") {
         children.push(this.parseElement());
       }
+
       this.eat("RBRACE");
     }
 
     return { type: "Element", name, props, children };
-  }
-
-  parseStyleSheet() {
-    this.eat("IDENTIFIER"); // StyleSheet
-    this.eat("LBRACE");
-    const styles = {};
-    while (this.current() && this.current().type !== "RBRACE") {
-      const key = this.eat("IDENTIFIER").value;
-      this.eat("LBRACE");
-      const styleObj = {};
-      while (this.current() && this.current().type !== "RBRACE") {
-        const prop = this.eat("IDENTIFIER").value;
-        let val;
-        if (this.current().type === "STRING") {
-          val = this.eat("STRING").value;
-        } else if (this.current().type === "IDENTIFIER") {
-          val = this.eat("IDENTIFIER").value;
-        } else if (this.current().type === "LBRACE") {
-          this.eat("LBRACE");
-          val = "";
-          while (this.current() && this.current().type !== "RBRACE") {
-            val += this.eat(this.current().type).value;
-          }
-          this.eat("RBRACE");
-        }
-        styleObj[prop] = val;
-      }
-      this.eat("RBRACE");
-      styles[key] = styleObj;
-    }
-    this.eat("RBRACE");
-    return { type: "StyleSheet", styles };
   }
 }
 
@@ -268,14 +259,15 @@ class CodeGenerator {
     switch (node.type) {
       case "Program":
         return node.body.map(n => this.generate(n)).join("\n");
-      case "StyleSheet":
-        return `const styles = ${JSON.stringify(node.styles, null, 2)};`;
+
       case "Element":
+        if (node.name === "StyleSheet") {
+          return this.generateStyleSheet(node);
+        }
         return this.generateElement(node);
+
       case "Text":
         return this.transformText(node.value);
-      default:
-        throw new Error("Unknown node type: " + node.type);
     }
   }
 
@@ -286,22 +278,38 @@ class CodeGenerator {
     return `"${text}"`;
   }
 
+  generateStyleSheet(node) {
+    const styles = {};
+    for (const child of node.children) {
+      const key = child.name;
+      styles[key] = {};
+      for (const prop in child.props) {
+        const val = child.props[prop];
+        if (typeof val === "string" && val.startsWith("{") && val.endsWith("}")) {
+          styles[key][prop] = val.slice(1, -1);
+        } else {
+          styles[key][prop] = val;
+        }
+      }
+    }
+    return `const styles = ${JSON.stringify(styles, null, 2)}`;
+  }
+
   generateElement(node) {
     const mappedTag = viewTags[node.name] || node.name;
-    const propsParts = [];
 
-    for (let key in node.props) {
+    const propsParts = [];
+    for (const key in node.props) {
       const value = node.props[key];
       if (value === true) propsParts.push(`${key}: true`);
-      else if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
+      else if (typeof value === "string" && value.startsWith("{") && value.endsWith("}"))
         propsParts.push(`${key}: ${value.slice(1, -1)}`);
-      } else {
-        propsParts.push(`${key}: ${JSON.stringify(value)}`);
-      }
+      else propsParts.push(`${key}: ${JSON.stringify(value)}`);
     }
 
     const propsString = `{ ${propsParts.join(", ")} }`;
     const children = node.children.map(c => this.generate(c)).join(", ");
+
     return `createElement("${mappedTag}", ${propsString}${children ? ", " + children : ""})`;
   }
 }
@@ -326,4 +334,4 @@ export function createElement(type, props, ...children) {
   };
 }
 
-export default HTMLCompiler;
+export default HTMLCompiler; 
