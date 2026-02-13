@@ -1,194 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Starlight Frontend Android Compiler</title>
+<meta charset="UTF-8" />
+<title>Starlight Android DSL Playground</title>
 
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f4f6f8;
-    }
+<style>
+body {
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #f4f6f8;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
+.section {
+  background: white;
+  padding: 18px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
 
-    .section {
-      background: white;
-      padding: 18px;
-      margin-bottom: 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
+textarea {
+  width: 100%;
+  height: 180px;
+  font-family: monospace;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
-    textarea {
-      width: 100%;
-      height: 180px;
-      font-family: monospace;
-      font-size: 14px;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      resize: vertical;
-    }
+button {
+  margin-top: 12px;
+  padding: 10px 18px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-    button.run-btn {
-      margin-top: 12px;
-      padding: 10px 18px;
-      background: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+pre {
+  background: #f0f0f0;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
 
-    pre {
-      background: #f0f0f0;
-      padding: 12px;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-size: 13px;
-    }
+#output {
+  min-height: 150px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
+}
 
-    #output {
-      min-height: 150px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 10px;
-      background: #fff;
-    }
+UIContainer, UILabel, UIButton, UITitle {
+  display: block;
+}
 
-    /* basic fallback for custom tags */
-    UIContainer, UILabel, UIButton, UITitle {
-      display: block;
-    }
-
-    UIButton {
-      cursor: pointer;
-    }
-  </style>
+UIButton {
+  cursor: pointer;
+}
+</style>
 </head>
 
 <body>
 
-
-<!-- DSL SECTION -->
 <div class="section">
-  <h2>Starlight code</h2>
+  <h2>Starlight DSL</h2>
   <textarea id="dsl"></textarea>
-  <button class="run-btn" id="run">Run</button>
+  <button id="run">Run</button>
 </div>
 
-<!-- COMPILED SECTION -->
 <div class="section">
   <h2>Compiled JavaScript</h2>
   <pre id="compiled"></pre>
 </div>
 
-<!-- OUTPUT SECTION -->
 <div class="section">
   <h2>Android View</h2>
   <div id="output"></div>
 </div>
 
 <script type="module">
-  import HTMLCompiler from "./html-compiler.js";
-  import Starlight, {
-    createElement,
-    render,
-    useState,
-    useEffect,
-    signal,
-    StyleSheet
-  } from "./compiler.js";
+import HTMLCompiler from "./html-compiler.js";
+import Starlight, {
+  createElement,
+  render,
+  signal,
+  StyleSheet
+} from "./compiler.js";
 
-  const dslInput = document.getElementById("dsl");
-  const compiledEl = document.getElementById("compiled");
-  const outputEl = document.getElementById("output");
-  const runBtn = document.getElementById("run");
+const dslInput = document.getElementById("dsl");
+const compiledEl = document.getElementById("compiled");
+const outputEl = document.getElementById("output");
+const runBtn = document.getElementById("run");
 
-  // Runtime styles using your StyleSheet
-  const styles = StyleSheet({
-    container: {
-      padding: "20px",
-      border: "2px solid #2196F3",
-      borderRadius: "10px",
-      backgroundColor: "#e3f2fd"
-    },
-    text: {
-      fontSize: "16px",
-      marginBottom: "10px"
-    },
-    button: {
-      padding: "8px 14px",
-      backgroundColor: "#2196F3",
-      color: "white",
-      borderRadius: "6px"
-    }
-  });
+// Reactive signal (NO hooks)
+const count = signal(0);
 
-  function AppWrapper({ tree }) {
-  const [count, setCount] = useState(0);
+// Styles
+const styles = StyleSheet({
+  container: {
+    padding: "20px",
+    border: "2px solid #2196F3",
+    borderRadius: "10px",
+    backgroundColor: "#e3f2fd"
+  },
+  button: {
+    padding: "8px 14px",
+    backgroundColor: "#2196F3",
+    color: "white",
+    borderRadius: "6px"
+  }
+});
 
-  useEffect(() => {
-    console.log("Count changed:", count);
-  }, [count]);
+function runDSL() {
+  try {
+    const compiler = new HTMLCompiler();
+    const code = compiler.compile(dslInput.value);
 
-  return createElement(
-    "UIContainer",
-    { style: styles.container },
-    tree,
-    createElement(
-      "UIButton",
-      {
-        style: styles.button,
-        onClick: () => setCount(count + 1)
-      },
-      "Increase Count"
-    ),
-    createElement(
-      "UILabel",
-      { style: styles.text },
-      `Count: ${count}`
-    )
-  );
+    compiledEl.textContent = code;
+
+    const fn = new Function(
+      "createElement",
+      "styles",
+      "count",
+      `return ${code}`
+    );
+
+    const tree = fn(createElement, styles, count);
+
+    outputEl.innerHTML = "";
+
+    // Wrap DSL tree manually (no hooks)
+    const root = createElement(
+      "UIContainer",
+      { style: styles.container },
+      tree,
+      createElement(
+        "UIButton",
+        {
+          style: styles.button,
+          onClick: () => count.value++
+        },
+        "Increase Count"
+      ),
+      createElement(
+        "UILabel",
+        {},
+        () => `Count: ${count.value}`
+      )
+    );
+
+    render(root, outputEl);
+
+  } catch (err) {
+    compiledEl.textContent = err.message;
+    outputEl.innerHTML = "<p style='color:red;'>Error rendering</p>";
+    console.error(err);
+  }
 }
 
-
-  function runDSL() {
-    try {
-      const compiler = new HTMLCompiler();
-      const code = compiler.compile(dslInput.value);
-
-      compiledEl.textContent = code;
-
-      const fn = new Function(
-        "createElement",
-        "styles",
-        `return ${code}`
-      );
-
-      const tree = fn(createElement, styles);
-
-      outputEl.innerHTML = "";
-
-      render(
-        AppWrapper(tree),
-        outputEl
-      );
-
-    } catch (err) {
-      compiledEl.textContent = err.message;
-      outputEl.innerHTML = "<p style='color:red;'>Error rendering</p>";
-      console.error(err);
-    }
-  }
-
-  runBtn.addEventListener("click", runDSL);
+runBtn.addEventListener("click", runDSL);
 </script>
 
 </body>
