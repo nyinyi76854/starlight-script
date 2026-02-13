@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Starlight SL Playground</title>
+  <meta charset="UTF-8" />
+  <title>Starlight DSL Playground</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -15,7 +15,6 @@
     .top {
       display: flex;
       flex: 1;
-      overflow: hidden;
     }
 
     .panel {
@@ -23,13 +22,6 @@
       padding: 10px;
       box-sizing: border-box;
       overflow: auto;
-      border-right: 1px solid #ddd;
-    }
-
-    #output {
-      border-right: none;
-      border-left: 1px solid #ddd;
-      background: #f9f9f9;
     }
 
     textarea {
@@ -37,7 +29,11 @@
       height: 100%;
       font-family: monospace;
       font-size: 14px;
-      resize: none;
+    }
+
+    #output {
+      border-left: 2px solid #ddd;
+      background: #fafafa;
     }
 
     .bottom {
@@ -52,12 +48,11 @@
     }
 
     button {
-      padding: 10px 20px;
+      padding: 10px;
       border: none;
       background: black;
       color: white;
       cursor: pointer;
-      margin: 10px;
     }
   </style>
 </head>
@@ -71,9 +66,19 @@
       <h3>DSL Input</h3>
       <textarea id="dsl">
 StyleSheet {
-  container: { padding: 20, backgroundColor: "#f5f5f5" }
-  title: { fontSize: 24, color: "blue" }
-  button: { padding: 10, backgroundColor: "black", color: "white" }
+  container: {
+    padding: 20,
+    backgroundColor: "#f5f5f5"
+  },
+  title: {
+    fontSize: 24,
+    color: "blue"
+  },
+  button: {
+    padding: 10,
+    backgroundColor: "black",
+    color: "white"
+  }
 }
 
 SLContainer style={styles.container} {
@@ -107,14 +112,7 @@ SLContainer style={styles.container} {
       const dsl = document.getElementById("dsl").value;
 
       const compiler = new HTMLCompiler();
-      let compiledCode;
-      try {
-        compiledCode = compiler.compile(dsl);
-      } catch (err) {
-        document.getElementById("compiled").textContent = err.message;
-        document.getElementById("app").innerHTML = `<pre style="color:red">${err.message}</pre>`;
-        return;
-      }
+      const compiledCode = compiler.compile(dsl);
 
       document.getElementById("compiled").textContent = compiledCode;
 
@@ -126,28 +124,234 @@ SLContainer style={styles.container} {
 
         let username = "";
 
-        function setUsername(val) {
-          username = val;
-          runDSL(); // re-render on input
+        function setUsername(value) {
+          username = value;
+          runDSL(); // Re-render on input
         }
 
         function handleClick() {
-          alert(`Hello, ${username || "Guest"}!`);
+          alert("Clicked!");
         }
 
         let styles = {};
 
+        if (dsl.includes("StyleSheet")) {
+          // StyleSheet is now compiled to `styles` object
+          const styleFunc = new Function("return " + compiledCode.split("SLContainer")[0]);
+          styles = styleFunc();
+        }
+
         const func = new Function(
-          ...Object.keys(runtime),
+          "createElement",
+          "render",
+          "signal",
+          "mountComponent",
+          "renderElement",
+          "useState",
+          "effect",
+          "registerRoute",
+          "navigate",
+          "Router",
+          "renderToString",
+          "hydrate",
+          "defineComponent",
+          "Builder",
+          "useEffect",
+          "useLayoutEffect",
+          "useCleanup",
+          "useAnimation",
+          "animate",
+          "useGesture",
+          "Fragment",
+          "Portal",
+          "Suspense",
+          "lazy",
+          "createContext",
+          "useContext",
+          "cloneElement",
+          "isValidElement",
+          "mergeProps",
+          "useFetch",
+          "useResource",
+          "createStore",
+          "useDebug",
+          "DevTools",
+          "SuspenseBoundary",
+          "Link",
+          "Redirect",
+          "useParams",
+          "useQuery",
+          "spring",
+          "transition",
+          "useTransition",
+          "useForm",
+          "useField",
+          "Form",
+          "Input",
+          "TextArea",
+          "Select",
+          "memo",
+          "forwardRef",
+          "useRef",
+          "ErrorBoundary",
+          "renderToNodeStream",
+          "hydrateRoot",
+          "Profiler",
+          "useLogger",
+          "DevInspector",
+          "batch",
+          "nextTick",
+          "isServer",
+          "isClient",
+          "SuspenseList",
+          "lazyWithPreload",
+          "useReducer",
+          "useStore",
+          "useSpring",
+          "useTransitionGroup",
+          "useDrag",
+          "useSwipe",
+          "useImperativeHandle",
+          "lazyComponentWrapper",
+          "withErrorBoundary",
+          "renderToStaticMarkup",
+          "hydrateStreaming",
+          "traceUpdates",
+          "useProfiler",
+          "classNames",
+          "mergeStyles",
+          "composeRefs",
+          "useHistory",
+          "useLocation",
+          "useMatch",
+          "RedirectTo",
+          "useMemo",
+          "useCallback",
+          "useDeferredValue",
+          "useId",
+          "motion",
+          "AnimatePresence",
+          "catchError",
+          "onError",
+          "useValidator",
+          "Controller",
+          "traceRenders",
+          "useInspector",
+          "useSafeAreaInsets",
+          "useKeyboard",
+          "Dimensions",
+          "cloneVNode",
+          "shallowEqual",
+          "defer",
           "styles",
           "username",
           "setUsername",
           "handleClick",
-          `return ${compiledCode}`
+          `return ${compiledCode.split("SLContainer").slice(1).join("SLContainer")}`
         );
 
         const vnode = func(
-          ...Object.values(runtime),
+          runtime.createElement,
+          runtime.render,
+          runtime.signal,
+          runtime.mountComponent,
+          runtime.renderElement,
+          runtime.useState,
+          runtime.effect,
+          runtime.registerRoute,
+          runtime.navigate,
+          runtime.Router,
+          runtime.renderToString,
+          runtime.hydrate,
+          runtime.defineComponent,
+          runtime.Builder,
+          runtime.useEffect,
+          runtime.useLayoutEffect,
+          runtime.useCleanup,
+          runtime.useAnimation,
+          runtime.animate,
+          runtime.useGesture,
+          runtime.Fragment,
+          runtime.Portal,
+          runtime.Suspense,
+          runtime.lazy,
+          runtime.createContext,
+          runtime.useContext,
+          runtime.cloneElement,
+          runtime.isValidElement,
+          runtime.mergeProps,
+          runtime.useFetch,
+          runtime.useResource,
+          runtime.createStore,
+          runtime.useDebug,
+          runtime.DevTools,
+          runtime.SuspenseBoundary,
+          runtime.Link,
+          runtime.Redirect,
+          runtime.useParams,
+          runtime.useQuery,
+          runtime.spring,
+          runtime.transition,
+          runtime.useTransition,
+          runtime.useForm,
+          runtime.useField,
+          runtime.Form,
+          runtime.Input,
+          runtime.TextArea,
+          runtime.Select,
+          runtime.memo,
+          runtime.forwardRef,
+          runtime.useRef,
+          runtime.ErrorBoundary,
+          runtime.renderToNodeStream,
+          runtime.hydrateRoot,
+          runtime.Profiler,
+          runtime.useLogger,
+          runtime.DevInspector,
+          runtime.batch,
+          runtime.nextTick,
+          runtime.isServer,
+          runtime.isClient,
+          runtime.SuspenseList,
+          runtime.lazyWithPreload,
+          runtime.useReducer,
+          runtime.useStore,
+          runtime.useSpring,
+          runtime.useTransitionGroup,
+          runtime.useDrag,
+          runtime.useSwipe,
+          runtime.useImperativeHandle,
+          runtime.lazyComponentWrapper,
+          runtime.withErrorBoundary,
+          runtime.renderToStaticMarkup,
+          runtime.hydrateStreaming,
+          runtime.traceUpdates,
+          runtime.useProfiler,
+          runtime.classNames,
+          runtime.mergeStyles,
+          runtime.composeRefs,
+          runtime.useHistory,
+          runtime.useLocation,
+          runtime.useMatch,
+          runtime.RedirectTo,
+          runtime.useMemo,
+          runtime.useCallback,
+          runtime.useDeferredValue,
+          runtime.useId,
+          runtime.motion,
+          runtime.AnimatePresence,
+          runtime.catchError,
+          runtime.onError,
+          runtime.useValidator,
+          runtime.Controller,
+          runtime.traceRenders,
+          runtime.useInspector,
+          runtime.useSafeAreaInsets,
+          runtime.useKeyboard,
+          runtime.Dimensions,
+          runtime.cloneVNode,
+          runtime.shallowEqual,
+          runtime.defer,
           styles,
           username,
           setUsername,
@@ -158,13 +362,10 @@ SLContainer style={styles.container} {
         app.appendChild(dom);
 
       } catch (e) {
-        app.innerHTML = `<pre style="color:red">${e.message}</pre>`;
+        app.innerHTML = "<pre style='color:red'>" + e.message + "</pre>";
         console.error(e);
       }
     };
-
-    // Initial render
-    runDSL();
   </script>
 
 </body>
