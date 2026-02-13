@@ -1,112 +1,460 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Starlight React Native + StyleSheet Demo</title>
+  <meta charset="UTF-8" />
+  <title>Starlight DSL Playground</title>
+
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      margin: 20px;
-      background: #f4f6f8;
+      margin: 0;
+      font-family: Arial;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
+    .top {
+      display: flex;
+      flex: 1;
     }
 
-    /* Basic fallback for custom tags */
-    UIContainer, UIHeader, UILabel, UIButton, UITitle {
-      display: block;
+    .panel {
+      flex: 1;
+      padding: 10px;
+      box-sizing: border-box;
+      overflow: auto;
     }
 
-    UIButton {
-      cursor: pointer;
+    textarea {
+      width: 100%;
+      height: 100%;
+      font-family: monospace;
+      font-size: 14px;
     }
 
-    pre {
-      background: #f0f0f0;
-      padding: 12px;
-      border-radius: 6px;
+    #output {
+      border-left: 2px solid #ddd;
+    }
+
+    .bottom {
+      height: 200px;
+      border-top: 2px solid #ddd;
+      padding: 10px;
+      overflow: auto;
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
       font-size: 13px;
-      overflow-x: auto;
-      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      background: black;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
+
 <body>
-  <h1>Starlight React Native + StyleSheet Demo</h1>
 
-  <div id="app"></div>
+<button onclick="runDSL()">▶ Run DSL</button>
 
-  <div>
-    <h2>Compiled DSL</h2>
-    <pre id="compiled"></pre>
-  </div>
+<div class="top">
 
-  <script type="module">
-    import HTMLCompiler from "./html-compiler.js";
-    import Starlight, { createElement, render, StyleSheet } from "./compiler.js";
+  <!-- DSL INPUT -->
+  <div class="panel">
+    <h3>DSL Input</h3>
+    <textarea id="dsl">
+let username = "User"
 
-    // -------------------------------
-    // Define StyleSheet
-    // -------------------------------
-    const styles = StyleSheet({
-      container: {
-        padding: "20px",
-        borderRadius: "10px",
-        backgroundColor: "#e3f2fd",
-        marginBottom: "10px"
-      },
-      header: {
-        fontSize: "20px",
-        fontWeight: "bold",
-        marginBottom: "8px"
-      },
-      text: {
-        fontSize: "16px",
-        marginBottom: "6px"
-      },
-      button: {
-        padding: "8px 14px",
-        backgroundColor: "#2196F3",
-        color: "white",
-        borderRadius: "6px",
-        margin: "4px 2px"
-      }
-    });
+function handleClick() {
+  alert("Hello " + username)
+}
 
-    // -------------------------------
-    // DSL Code that uses the StyleSheet
-    // -------------------------------
-    const dslCode = `
-UIContainer style={styles.container} {
-  UIHeader style={styles.header} "Welcome to Starlight"
-  UIContainer style={styles.container} {
-    UILabel style={styles.text} "This is a React Native-like DSL"
-    UIButton style={styles.button} "Click Me"
-    UIButton style={styles.button} "Another Button"
+StyleSheet {
+  container: {
+    padding: 20,
+    backgroundColor: "#eee"
+  },
+  title: {
+    fontSize: 22,
+    color: "blue"
+  },
+  button: {
+    padding: 10,
+    backgroundColor: "black",
+    color: "white"
   }
 }
-    `;
 
-    // -------------------------------
-    // Compile DSL to JS
-    // -------------------------------
-    const compiler = new HTMLCompiler();
-    const compiledCode = compiler.compile(dslCode);
-    document.getElementById("compiled").textContent = compiledCode;
+div style={styles.container} {
+  h1 style={styles.title} "Welcome"
+  p "Hello, {username}!"
+  button style={styles.button} onClick={handleClick} "Click Me"
+}
+    </textarea>
+  </div>
 
-    // -------------------------------
-    // Render DSL
-    // -------------------------------
-    const appRoot = document.getElementById("app");
+  <!-- OUTPUT -->
+  <div class="panel" id="output">
+    <h3>Rendered Output</h3>
+    <div id="app"></div>
+  </div>
 
-    // Use Function constructor to pass styles into DSL
-    const fn = new Function("createElement", "styles", `return ${compiledCode}`);
-    const vnode = fn(Starlight.createElement, styles);
+</div>
 
-    render(vnode, appRoot);
-  </script>
+<!-- COMPILED JS -->
+<div class="bottom">
+  <h3>Compiled JavaScript</h3>
+  <pre id="compiled"></pre>
+</div>
+
+<script type="module">
+import HTMLCompiler from "./html-compiler.js";
+import {
+  createElement,
+  render,
+  signal,
+  mountComponent,
+  renderElement,
+  useState,
+  effect,
+  registerRoute,
+  navigate,
+  Router,
+  renderToString,
+  hydrate,
+  defineComponent,
+  Builder,
+  useEffect,
+  useLayoutEffect,
+  useCleanup,
+  useAnimation,
+  animate,
+  useGesture,
+  Fragment,
+  Portal,
+  Suspense,
+  lazy,
+  createContext,
+  useContext,
+  cloneElement,
+  isValidElement,
+  mergeProps,
+  useFetch,
+  useResource,
+  createStore,
+  useDebug,
+  DevTools,
+  SuspenseBoundary,
+  Link,
+  Redirect,
+  useParams,
+  useQuery,
+  spring,
+  transition,
+  useTransition,
+  useForm,
+  useField,
+  Form,
+  Input,
+  TextArea,
+  Select,
+  memo,
+  forwardRef,
+  useRef,
+  ErrorBoundary,
+  renderToNodeStream,
+  hydrateRoot,
+  Profiler,
+  useLogger,
+  DevInspector,
+  batch,
+  nextTick,
+  isServer,
+  isClient,
+  SuspenseList,
+  lazyWithPreload,
+  useReducer,
+  useStore,
+  useSpring,
+  useTransitionGroup,
+  useDrag,
+  useSwipe,
+  useImperativeHandle,
+  lazyComponentWrapper,
+  withErrorBoundary,
+  renderToStaticMarkup,
+  hydrateStreaming,
+  traceUpdates,
+  useProfiler,
+  classNames,
+  mergeStyles,
+  composeRefs,
+  useHistory,
+  useLocation,
+  useMatch,
+  RedirectTo,
+  useMemo,
+  useCallback,
+  useDeferredValue,
+  useId,
+  motion,
+  AnimatePresence,
+  catchError,
+  onError,
+  useValidator,
+  Controller,
+  traceRenders,
+  useInspector,
+  useSafeAreaInsets,
+  useKeyboard,
+  Dimensions,
+  cloneVNode,
+  shallowEqual,
+  defer,
+  StyleSheet
+} from "./compiler.js";
+
+window.runDSL = function () {
+  const dsl = document.getElementById("dsl").value;
+
+  const compiler = new HTMLCompiler();
+  const compiled = compiler.compile(dsl);
+
+  document.getElementById("compiled").textContent = compiled;
+
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  try {
+
+    const func = new Function(
+      "createElement",
+      "render",
+      "signal",
+      "mountComponent",
+      "renderElement",
+      "useState",
+      "effect",
+      "registerRoute",
+      "navigate",
+      "Router",
+      "renderToString",
+      "hydrate",
+      "defineComponent",
+      "Builder",
+      "useEffect",
+      "useLayoutEffect",
+      "useCleanup",
+      "useAnimation",
+      "animate",
+      "useGesture",
+      "Fragment",
+      "Portal",
+      "Suspense",
+      "lazy",
+      "createContext",
+      "useContext",
+      "cloneElement",
+      "isValidElement",
+      "mergeProps",
+      "useFetch",
+      "useResource",
+      "createStore",
+      "useDebug",
+      "DevTools",
+      "SuspenseBoundary",
+      "Link",
+      "Redirect",
+      "useParams",
+      "useQuery",
+      "spring",
+      "transition",
+      "useTransition",
+      "useForm",
+      "useField",
+      "Form",
+      "Input",
+      "TextArea",
+      "Select",
+      "memo",
+      "forwardRef",
+      "useRef",
+      "ErrorBoundary",
+      "renderToNodeStream",
+      "hydrateRoot",
+      "Profiler",
+      "useLogger",
+      "DevInspector",
+      "batch",
+      "nextTick",
+      "isServer",
+      "isClient",
+      "SuspenseList",
+      "lazyWithPreload",
+      "useReducer",
+      "useStore",
+      "useSpring",
+      "useTransitionGroup",
+      "useDrag",
+      "useSwipe",
+      "useImperativeHandle",
+      "lazyComponentWrapper",
+      "withErrorBoundary",
+      "renderToStaticMarkup",
+      "hydrateStreaming",
+      "traceUpdates",
+      "useProfiler",
+      "classNames",
+      "mergeStyles",
+      "composeRefs",
+      "useHistory",
+      "useLocation",
+      "useMatch",
+      "RedirectTo",
+      "useMemo",
+      "useCallback",
+      "useDeferredValue",
+      "useId",
+      "motion",
+      "AnimatePresence",
+      "catchError",
+      "onError",
+      "useValidator",
+      "Controller",
+      "traceRenders",
+      "useInspector",
+      "useSafeAreaInsets",
+      "useKeyboard",
+      "Dimensions",
+      "cloneVNode",
+      "shallowEqual",
+      "defer",
+      "StyleSheet",
+      `
+      let styles = {};
+      ${compiled}
+      return typeof tree !== "undefined" ? tree : null;
+      `
+    );
+
+    const vnode = func(
+      createElement,
+      render,
+      signal,
+      mountComponent,
+      renderElement,
+      useState,
+      effect,
+      registerRoute,
+      navigate,
+      Router,
+      renderToString,
+      hydrate,
+      defineComponent,
+      Builder,
+      useEffect,
+      useLayoutEffect,
+      useCleanup,
+      useAnimation,
+      animate,
+      useGesture,
+      Fragment,
+      Portal,
+      Suspense,
+      lazy,
+      createContext,
+      useContext,
+      cloneElement,
+      isValidElement,
+      mergeProps,
+      useFetch,
+      useResource,
+      createStore,
+      useDebug,
+      DevTools,
+      SuspenseBoundary,
+      Link,
+      Redirect,
+      useParams,
+      useQuery,
+      spring,
+      transition,
+      useTransition,
+      useForm,
+      useField,
+      Form,
+      Input,
+      TextArea,
+      Select,
+      memo,
+      forwardRef,
+      useRef,
+      ErrorBoundary,
+      renderToNodeStream,
+      hydrateRoot,
+      Profiler,
+      useLogger,
+      DevInspector,
+      batch,
+      nextTick,
+      isServer,
+      isClient,
+      SuspenseList,
+      lazyWithPreload,
+      useReducer,
+      useStore,
+      useSpring,
+      useTransitionGroup,
+      useDrag,
+      useSwipe,
+      useImperativeHandle,
+      lazyComponentWrapper,
+      withErrorBoundary,
+      renderToStaticMarkup,
+      hydrateStreaming,
+      traceUpdates,
+      useProfiler,
+      classNames,
+      mergeStyles,
+      composeRefs,
+      useHistory,
+      useLocation,
+      useMatch,
+      RedirectTo,
+      useMemo,
+      useCallback,
+      useDeferredValue,
+      useId,
+      motion,
+      AnimatePresence,
+      catchError,
+      onError,
+      useValidator,
+      Controller,
+      traceRenders,
+      useInspector,
+      useSafeAreaInsets,
+      useKeyboard,
+      Dimensions,
+      cloneVNode,
+      shallowEqual,
+      defer,
+      StyleSheet
+    );
+
+    const dom = renderElement(vnode);
+    app.appendChild(dom);
+
+  } catch (e) {
+    app.innerHTML = "<pre style='color:red'>" + e.message + "</pre>";
+    console.error(e);
+  }
+};
+</script>
+
 </body>
 </html>
