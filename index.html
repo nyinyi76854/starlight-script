@@ -49,9 +49,9 @@ createElement('SLContainerView', { class: 'container' },
     import htmlMap from './html-map.js';
 
     // Apply dynamic stylesheet from compiler.js if exists
-    if (stylesheet && typeof stylesheet === 'string') {
+    if (StyleSheet && typeof StyleSheet === 'string') {
       const styleEl = document.createElement('style');
-      styleEl.textContent = stylesheet;
+      styleEl.textContent = StyleSheet;
       document.head.appendChild(styleEl);
     }
 
