@@ -1446,5 +1446,6 @@ export default {
   Dimensions,
   cloneVNode,
   shallowEqual,
-  defer
+  defer,
+  StyleSheet
 };
