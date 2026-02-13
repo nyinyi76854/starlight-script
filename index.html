@@ -1,85 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Starlight DSL Playground</title>
+<meta charset="UTF-8" />
+<title>Starlight SL DSL Playground</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+  .top {
+    display: flex;
+    flex: 1;
+  }
 
-    .top {
-      display: flex;
-      flex: 1;
-    }
+  .panel {
+    flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: auto;
+  }
 
-    .panel {
-      flex: 1;
-      padding: 10px;
-      box-sizing: border-box;
-      overflow: auto;
-    }
+  textarea {
+    width: 100%;
+    height: 100%;
+    font-family: monospace;
+    font-size: 14px;
+  }
 
-    textarea {
-      width: 100%;
-      height: 100%;
-      font-family: monospace;
-      font-size: 14px;
-    }
+  #output {
+    border-left: 2px solid #ddd;
+  }
 
-    #output {
-      border-left: 2px solid #ddd;
-    }
+  .bottom {
+    height: 200px;
+    border-top: 2px solid #ddd;
+    padding: 10px;
+    overflow: auto;
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 13px;
+  }
 
-    .bottom {
-      height: 200px;
-      border-top: 2px solid #ddd;
-      padding: 10px;
-      overflow: auto;
-      background: #111;
-      color: #0f0;
-      font-family: monospace;
-      font-size: 13px;
-    }
-
-    button {
-      padding: 10px;
-      border: none;
-      background: black;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+  button {
+    padding: 10px;
+    border: none;
+    background: black;
+    color: white;
+    cursor: pointer;
+  }
+</style>
 </head>
-
 <body>
 
 <button onclick="runDSL()">▶ Run DSL</button>
 
 <div class="top">
-
   <!-- DSL INPUT -->
   <div class="panel">
     <h3>DSL Input</h3>
     <textarea id="dsl">
-let username = "User"
-
-function handleClick() {
-  alert("Hello " + username)
-}
-
 StyleSheet {
   container: {
     padding: 20,
-    backgroundColor: "#eee"
+    backgroundColor: "#f5f5f5"
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     color: "blue"
   },
   button: {
@@ -89,20 +80,21 @@ StyleSheet {
   }
 }
 
-div style={styles.container} {
-  h1 style={styles.title} "Welcome"
-  p "Hello, {username}!"
-  button style={styles.button} onClick={handleClick} "Click Me"
+SLContainer style={styles.container} {
+  SLTitle style={styles.title} "Welcome to Starlight"
+  SLLabel "Enter your name:"
+  SLTextField onInput={e => setUsername(e.target.value)}
+  SLButton style={styles.button} onClick={handleClick} "Click Me"
+  SLLabel "Hello, {username}!"
 }
     </textarea>
   </div>
 
-  <!-- OUTPUT -->
+  <!-- RENDERED OUTPUT -->
   <div class="panel" id="output">
     <h3>Rendered Output</h3>
     <div id="app"></div>
   </div>
-
 </div>
 
 <!-- COMPILED JS -->
@@ -112,124 +104,36 @@ div style={styles.container} {
 </div>
 
 <script type="module">
+import * as Core from "./compiler.js";
 import HTMLCompiler from "./html-compiler.js";
-import {
-  createElement,
-  render,
-  signal,
-  mountComponent,
-  renderElement,
-  useState,
-  effect,
-  registerRoute,
-  navigate,
-  Router,
-  renderToString,
-  hydrate,
-  defineComponent,
-  Builder,
-  useEffect,
-  useLayoutEffect,
-  useCleanup,
-  useAnimation,
-  animate,
-  useGesture,
-  Fragment,
-  Portal,
-  Suspense,
-  lazy,
-  createContext,
-  useContext,
-  cloneElement,
-  isValidElement,
-  mergeProps,
-  useFetch,
-  useResource,
-  createStore,
-  useDebug,
-  DevTools,
-  SuspenseBoundary,
-  Link,
-  Redirect,
-  useParams,
-  useQuery,
-  spring,
-  transition,
-  useTransition,
-  useForm,
-  useField,
-  Form,
-  Input,
-  TextArea,
-  Select,
-  memo,
-  forwardRef,
-  useRef,
-  ErrorBoundary,
-  renderToNodeStream,
-  hydrateRoot,
-  Profiler,
-  useLogger,
-  DevInspector,
-  batch,
-  nextTick,
-  isServer,
-  isClient,
-  SuspenseList,
-  lazyWithPreload,
-  useReducer,
-  useStore,
-  useSpring,
-  useTransitionGroup,
-  useDrag,
-  useSwipe,
-  useImperativeHandle,
-  lazyComponentWrapper,
-  withErrorBoundary,
-  renderToStaticMarkup,
-  hydrateStreaming,
-  traceUpdates,
-  useProfiler,
-  classNames,
-  mergeStyles,
-  composeRefs,
-  useHistory,
-  useLocation,
-  useMatch,
-  RedirectTo,
-  useMemo,
-  useCallback,
-  useDeferredValue,
-  useId,
-  motion,
-  AnimatePresence,
-  catchError,
-  onError,
-  useValidator,
-  Controller,
-  traceRenders,
-  useInspector,
-  useSafeAreaInsets,
-  useKeyboard,
-  Dimensions,
-  cloneVNode,
-  shallowEqual,
-  defer,
-  StyleSheet
-} from "./compiler.js";
 
-window.runDSL = function () {
+window.runDSL = function() {
   const dsl = document.getElementById("dsl").value;
-
   const compiler = new HTMLCompiler();
-  const compiled = compiler.compile(dsl);
+  let compiledCode;
 
-  document.getElementById("compiled").textContent = compiled;
+  try {
+    compiledCode = compiler.compile(dsl);
+    document.getElementById("compiled").textContent = compiledCode;
+  } catch(e) {
+    document.getElementById("compiled").textContent = e.message;
+    return;
+  }
 
   const app = document.getElementById("app");
   app.innerHTML = "";
 
   try {
+    let styles = Core.StyleSheet({
+      container: { padding: 20, backgroundColor: "#f5f5f5" },
+      title: { fontSize: 24, color: "blue" },
+      button: { padding: 10, backgroundColor: "black", color: "white" }
+    });
+
+    let username = "";
+
+    function setUsername(value) { username = value; }
+    function handleClick() { alert("Hello " + username + "!"); }
 
     const func = new Function(
       "createElement",
@@ -333,123 +237,125 @@ window.runDSL = function () {
       "cloneVNode",
       "shallowEqual",
       "defer",
-      "StyleSheet",
-      `
-      let styles = {};
-      ${compiled}
-      return typeof tree !== "undefined" ? tree : null;
-      `
+      "styles",
+      "username",
+      "setUsername",
+      "handleClick",
+      `return ${compiledCode}`
     );
 
     const vnode = func(
-      createElement,
-      render,
-      signal,
-      mountComponent,
-      renderElement,
-      useState,
-      effect,
-      registerRoute,
-      navigate,
-      Router,
-      renderToString,
-      hydrate,
-      defineComponent,
-      Builder,
-      useEffect,
-      useLayoutEffect,
-      useCleanup,
-      useAnimation,
-      animate,
-      useGesture,
-      Fragment,
-      Portal,
-      Suspense,
-      lazy,
-      createContext,
-      useContext,
-      cloneElement,
-      isValidElement,
-      mergeProps,
-      useFetch,
-      useResource,
-      createStore,
-      useDebug,
-      DevTools,
-      SuspenseBoundary,
-      Link,
-      Redirect,
-      useParams,
-      useQuery,
-      spring,
-      transition,
-      useTransition,
-      useForm,
-      useField,
-      Form,
-      Input,
-      TextArea,
-      Select,
-      memo,
-      forwardRef,
-      useRef,
-      ErrorBoundary,
-      renderToNodeStream,
-      hydrateRoot,
-      Profiler,
-      useLogger,
-      DevInspector,
-      batch,
-      nextTick,
-      isServer,
-      isClient,
-      SuspenseList,
-      lazyWithPreload,
-      useReducer,
-      useStore,
-      useSpring,
-      useTransitionGroup,
-      useDrag,
-      useSwipe,
-      useImperativeHandle,
-      lazyComponentWrapper,
-      withErrorBoundary,
-      renderToStaticMarkup,
-      hydrateStreaming,
-      traceUpdates,
-      useProfiler,
-      classNames,
-      mergeStyles,
-      composeRefs,
-      useHistory,
-      useLocation,
-      useMatch,
-      RedirectTo,
-      useMemo,
-      useCallback,
-      useDeferredValue,
-      useId,
-      motion,
-      AnimatePresence,
-      catchError,
-      onError,
-      useValidator,
-      Controller,
-      traceRenders,
-      useInspector,
-      useSafeAreaInsets,
-      useKeyboard,
-      Dimensions,
-      cloneVNode,
-      shallowEqual,
-      defer,
-      StyleSheet
+      Core.createElement,
+      Core.render,
+      Core.signal,
+      Core.mountComponent,
+      Core.renderElement,
+      Core.useState,
+      Core.effect,
+      Core.registerRoute,
+      Core.navigate,
+      Core.Router,
+      Core.renderToString,
+      Core.hydrate,
+      Core.defineComponent,
+      Core.Builder,
+      Core.useEffect,
+      Core.useLayoutEffect,
+      Core.useCleanup,
+      Core.useAnimation,
+      Core.animate,
+      Core.useGesture,
+      Core.Fragment,
+      Core.Portal,
+      Core.Suspense,
+      Core.lazy,
+      Core.createContext,
+      Core.useContext,
+      Core.cloneElement,
+      Core.isValidElement,
+      Core.mergeProps,
+      Core.useFetch,
+      Core.useResource,
+      Core.createStore,
+      Core.useDebug,
+      Core.DevTools,
+      Core.SuspenseBoundary,
+      Core.Link,
+      Core.Redirect,
+      Core.useParams,
+      Core.useQuery,
+      Core.spring,
+      Core.transition,
+      Core.useTransition,
+      Core.useForm,
+      Core.useField,
+      Core.Form,
+      Core.Input,
+      Core.TextArea,
+      Core.Select,
+      Core.memo,
+      Core.forwardRef,
+      Core.useRef,
+      Core.ErrorBoundary,
+      Core.renderToNodeStream,
+      Core.hydrateRoot,
+      Core.Profiler,
+      Core.useLogger,
+      Core.DevInspector,
+      Core.batch,
+      Core.nextTick,
+      Core.isServer,
+      Core.isClient,
+      Core.SuspenseList,
+      Core.lazyWithPreload,
+      Core.useReducer,
+      Core.useStore,
+      Core.useSpring,
+      Core.useTransitionGroup,
+      Core.useDrag,
+      Core.useSwipe,
+      Core.useImperativeHandle,
+      Core.lazyComponentWrapper,
+      Core.withErrorBoundary,
+      Core.renderToStaticMarkup,
+      Core.hydrateStreaming,
+      Core.traceUpdates,
+      Core.useProfiler,
+      Core.classNames,
+      Core.mergeStyles,
+      Core.composeRefs,
+      Core.useHistory,
+      Core.useLocation,
+      Core.useMatch,
+      Core.RedirectTo,
+      Core.useMemo,
+      Core.useCallback,
+      Core.useDeferredValue,
+      Core.useId,
+      Core.motion,
+      Core.AnimatePresence,
+      Core.catchError,
+      Core.onError,
+      Core.useValidator,
+      Core.Controller,
+      Core.traceRenders,
+      Core.useInspector,
+      Core.useSafeAreaInsets,
+      Core.useKeyboard,
+      Core.Dimensions,
+      Core.cloneVNode,
+      Core.shallowEqual,
+      Core.defer,
+      styles,
+      username,
+      setUsername,
+      handleClick
     );
 
-    const dom = renderElement(vnode);
+    const dom = Core.renderElement(vnode);
     app.appendChild(dom);
 
-  } catch (e) {
+  } catch(e) {
     app.innerHTML = "<pre style='color:red'>" + e.message + "</pre>";
     console.error(e);
   }
