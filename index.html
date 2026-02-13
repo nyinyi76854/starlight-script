@@ -131,33 +131,33 @@
     }
   });
 
-  // Simple test component using useState
-  function AppWrapper(ComponentTree) {
-    const [count, setCount] = useState(0);
+  function AppWrapper({ tree }) {
+  const [count, setCount] = useState(0);
 
-    useEffect(() => {
-      console.log("Count changed:", count);
-    }, [count]);
+  useEffect(() => {
+    console.log("Count changed:", count);
+  }, [count]);
 
-    return createElement(
-      "UIContainer",
-      { style: styles.container },
-      ComponentTree,
-      createElement(
-        "UIButton",
-        {
-          style: styles.button,
-          onClick: () => setCount(count + 1)
-        },
-        "Increase Count"
-      ),
-      createElement(
-        "UILabel",
-        { style: styles.text },
-        `Count: ${count}`
-      )
-    );
-  }
+  return createElement(
+    "UIContainer",
+    { style: styles.container },
+    tree,
+    createElement(
+      "UIButton",
+      {
+        style: styles.button,
+        onClick: () => setCount(count + 1)
+      },
+      "Increase Count"
+    ),
+    createElement(
+      "UILabel",
+      { style: styles.text },
+      `Count: ${count}`
+    )
+  );
+}
+
 
   function runDSL() {
     try {
