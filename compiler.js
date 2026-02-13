@@ -10,12 +10,22 @@ export function signal(initialValue) {
   }
 
   function setter(newValue) {
-    value = newValue;
+    if (typeof newValue === "function") {
+      value = newValue(value);
+    } else {
+      value = newValue;
+    }
+
     subscribers.forEach(effect => effect());
+
+    if (currentComponent && currentComponent.update) {
+      currentComponent.update();
+    }
   }
 
   return [getter, setter];
 }
+
 
 export function effect(fn) {
   activeEffect = fn;
@@ -38,7 +48,16 @@ export function useState(initial) {
   const index = component.stateIndex++;
 
   if (!component.state[index]) {
-    component.state[index] = signal(initial);
+    const [get, set] = signal(initial);
+
+    const wrappedSetter = (value) => {
+      set(value);
+      if (component.update) {
+        component.update();
+      }
+    };
+
+    component.state[index] = [get, wrappedSetter];
   }
 
   return component.state[index];
@@ -52,25 +71,60 @@ export function createElement(type, props, ...children) {
 }
 export function mountComponent(vnode) {
   const prevComponent = currentComponent;
+
   const component = {
     vnode,
     state: [],
     stateIndex: 0,
-    effects: []
+    effects: [],
+    dom: null,
+    parent: null
   };
 
-  currentComponent = component;
-  const rendered = vnode.type(vnode.props || {});
+  function update() {
+    component.stateIndex = 0;
 
-  currentComponent = prevComponent; 
-  return renderElement(rendered);
+    const prevVNode = component.vnode._rendered;
+    const newVNode = vnode.type(vnode.props || {});
+
+    component.vnode._rendered = newVNode;
+
+    const newDom = renderElement(newVNode);
+
+    if (component.dom && component.parent) {
+      component.parent.replaceChild(newDom, component.dom);
+    }
+
+    component.dom = newDom;
+  }
+
+  component.update = update;
+
+  currentComponent = component;
+
+  const renderedVNode = vnode.type(vnode.props || {});
+  component.vnode._rendered = renderedVNode;
+
+  const dom = renderElement(renderedVNode);
+
+  component.dom = dom;
+
+  setTimeout(() => {
+    component.parent = dom.parentNode;
+  });
+
+  currentComponent = prevComponent;
+
+  return dom;
 }
 
 export function renderElement(vnode) {
-  if (vnode == null || vnode === false) return document.createTextNode("");
+  if (vnode == null || vnode === false || vnode === true) {
+    return document.createTextNode("");
+  }
 
   if (typeof vnode === "string" || typeof vnode === "number") {
-    return document.createTextNode(vnode);
+    return document.createTextNode(String(vnode));
   }
 
   if (typeof vnode.type === "function") {
@@ -78,16 +132,42 @@ export function renderElement(vnode) {
   }
 
   const dom = document.createElement(vnode.type);
-  if (vnode.props) setProps(dom, vnode.props);
+
+  if (vnode.props) {
+    for (let key in vnode.props) {
+      const value = vnode.props[key];
+
+      if (key.startsWith("on") && typeof value === "function") {
+        const eventName = key.slice(2).toLowerCase();
+        dom.addEventListener(eventName, value);
+      }
+      else if (key === "style" && typeof value === "object") {
+        Object.assign(dom.style, value);
+      }
+
+      else if (key === "className") {
+        dom.setAttribute("class", value);
+      }
+
+      else if (key !== "children") {
+        dom.setAttribute(key, value);
+      }
+    }
+  }
 
   if (vnode.children) {
-    vnode.children.forEach(child => {
+    const children = vnode.children.flat
+      ? vnode.children.flat(Infinity)
+      : vnode.children;
+
+    children.forEach(child => {
       dom.appendChild(renderElement(child));
     });
   }
 
   return dom;
 }
+
 
 function setProps(dom, props) {
   for (let key in props) {
