@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Android-Like DSL Demo</title>
+  <meta charset="UTF-8" />
+  <title>Starlight Frontend Android Compiler</title>
+
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 20px;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
       background: #f4f6f8;
     }
 
-    h1 { text-align: center; margin-bottom: 30px; }
-
-    section {
+    h1 {
+      text-align: center;
       margin-bottom: 30px;
-      padding: 16px;
+    }
+
+    .section {
       background: white;
+      padding: 18px;
+      margin-bottom: 25px;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
 
     textarea {
       width: 100%;
-      height: 160px;
+      height: 180px;
       font-family: monospace;
       font-size: 14px;
       padding: 10px;
@@ -31,24 +36,34 @@
       resize: vertical;
     }
 
+    button.run-btn {
+      margin-top: 12px;
+      padding: 10px 18px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
     pre {
       background: #f0f0f0;
       padding: 12px;
       border-radius: 6px;
-      font-size: 13px;
       overflow-x: auto;
+      font-size: 13px;
     }
 
-    #rendered {
+    #output {
       min-height: 150px;
-      padding: 10px;
-      border-radius: 6px;
-      background: #fff;
       border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
     }
 
-    /* Basic fallback for custom tags */
-    UIContainer, UIHeader, UIFooter, UILabel, UIButton, UITitle {
+    /* basic fallback for custom tags */
+    UIContainer, UILabel, UIButton, UITitle {
       display: block;
     }
 
@@ -57,54 +72,46 @@
     }
   </style>
 </head>
+
 <body>
 
-<h1>Android-Like DSL + StyleSheet</h1>
 
-<section>
-  <h2>DSL Input</h2>
-  <textarea id="dsl">
-UIContainer style={styles.container} {
-  UIHeader {
-    UITitle style={styles.title} "Welcome to My App"
-  }
+<!-- DSL SECTION -->
+<div class="section">
+  <h2>Starlight code</h2>
+  <textarea id="dsl"></textarea>
+  <button class="run-btn" id="run">Run</button>
+</div>
 
-  UIContainer style={styles.card} {
-    UILabel style={styles.text} "Hello, {username}!"
-    UIButton style={styles.button} onClick={handleClick} "Click Me"
-  }
-
-  UIFooter {
-    UILabel style={styles.footer} "Footer Text"
-  }
-}
-  </textarea>
-</section>
-
-<section>
+<!-- COMPILED SECTION -->
+<div class="section">
   <h2>Compiled JavaScript</h2>
   <pre id="compiled"></pre>
-</section>
+</div>
 
-<section>
-  <h2>Rendered Output</h2>
-  <div id="rendered"></div>
-</section>
+<!-- OUTPUT SECTION -->
+<div class="section">
+  <h2>Android View</h2>
+  <div id="output"></div>
+</div>
 
 <script type="module">
-  import HTMLCompiler from './html-compiler.js';
-  import Starlight, { StyleSheet } from './compiler.js';
+  import HTMLCompiler from "./html-compiler.js";
+  import Starlight, {
+    createElement,
+    render,
+    useState,
+    useEffect,
+    signal,
+    StyleSheet
+  } from "./compiler.js";
 
-  const dslInput = document.getElementById('dsl');
-  const compiledOutput = document.getElementById('compiled');
-  const renderedContainer = document.getElementById('rendered');
+  const dslInput = document.getElementById("dsl");
+  const compiledEl = document.getElementById("compiled");
+  const outputEl = document.getElementById("output");
+  const runBtn = document.getElementById("run");
 
-  const username = "Alice";
-  function handleClick() {
-    alert("Button clicked!");
-  }
-
-  // ✅ Using your StyleSheet
+  // Runtime styles using your StyleSheet
   const styles = StyleSheet({
     container: {
       padding: "20px",
@@ -112,68 +119,76 @@ UIContainer style={styles.container} {
       borderRadius: "10px",
       backgroundColor: "#e3f2fd"
     },
-    title: {
-      fontSize: "22px",
-      fontWeight: "bold",
+    text: {
+      fontSize: "16px",
       marginBottom: "10px"
     },
-    card: {
-      padding: "15px",
-      marginTop: "10px",
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
-    },
-    text: {
-      marginBottom: "10px",
-      fontSize: "16px"
-    },
     button: {
-      padding: "10px 16px",
+      padding: "8px 14px",
       backgroundColor: "#2196F3",
       color: "white",
       borderRadius: "6px"
-    },
-    footer: {
-      marginTop: "15px",
-      fontSize: "14px",
-      color: "#555"
     }
   });
 
-  function compileAndRender() {
-    const compiler = new HTMLCompiler();
+  // Simple test component using useState
+  function AppWrapper(ComponentTree) {
+    const [count, setCount] = useState(0);
 
+    useEffect(() => {
+      console.log("Count changed:", count);
+    }, [count]);
+
+    return createElement(
+      "UIContainer",
+      { style: styles.container },
+      ComponentTree,
+      createElement(
+        "UIButton",
+        {
+          style: styles.button,
+          onClick: () => setCount(count + 1)
+        },
+        "Increase Count"
+      ),
+      createElement(
+        "UILabel",
+        { style: styles.text },
+        `Count: ${count}`
+      )
+    );
+  }
+
+  function runDSL() {
     try {
+      const compiler = new HTMLCompiler();
       const code = compiler.compile(dslInput.value);
-      compiledOutput.textContent = code;
+
+      compiledEl.textContent = code;
 
       const fn = new Function(
-        'createElement',
-        'username',
-        'handleClick',
-        'styles',
+        "createElement",
+        "styles",
         `return ${code}`
       );
 
-      const vnode = fn(
-        Starlight.createElement,
-        username,
-        handleClick,
-        styles
+      const tree = fn(createElement, styles);
+
+      outputEl.innerHTML = "";
+
+      render(
+        AppWrapper(tree),
+        outputEl
       );
 
-      Starlight.render(vnode, renderedContainer);
-
     } catch (err) {
-      compiledOutput.textContent = err.message;
-      renderedContainer.innerHTML = '<p style="color:red;">Error rendering DSL</p>';
+      compiledEl.textContent = err.message;
+      outputEl.innerHTML = "<p style='color:red;'>Error rendering</p>";
       console.error(err);
     }
   }
 
-  dslInput.addEventListener('input', compileAndRender);
-  compileAndRender();
+  runBtn.addEventListener("click", runDSL);
 </script>
 
 </body>
