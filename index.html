@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SL Interactive Compiler</title>
+  <title>SL Dynamic Compiler</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     h1 { margin-bottom: 20px; }
@@ -16,16 +16,18 @@
   </style>
 </head>
 <body>
-  <h1>SL Interactive Compiler</h1>
+  <h1>SL Dynamic Compiler</h1>
 
   <div class="container">
     <!-- SL Code Input -->
     <div class="box">
       <h3>SL Code Input</h3>
-      <textarea id="slInput">// Example SL code
+      <textarea id="slInput">// Type your SL code here
 createElement('SLContainerView', { class: 'container' },
-  createElement('SLHeader1', { class: 'main-title' }, 'Hello SL!'),
-  createElement('SLButton', { class: 'btn', id: 'btn1' }, 'Click Me')
+  createElement('SLHeader1', { class: 'main-title' }, 'Dynamic SL Demo'),
+  createElement('SLTextView', { class: 'paragraph' }, 'Click buttons below:'),
+  createElement('SLButton', { class: 'btn', 'data-action': 'hello' }, 'Say Hello'),
+  createElement('SLButton', { class: 'btn', 'data-action': 'bye' }, 'Say Bye')
 )</textarea>
       <button class="btn-compile" id="compileBtn">Compile</button>
     </div>
@@ -43,10 +45,17 @@ createElement('SLContainerView', { class: 'container' },
   </div>
 
   <script type="module">
-    import { createElement } from './compiler.js';
+    import { createElement, stylesheet } from './compiler.js';
     import htmlMap from './html-map.js';
 
-    // Function to compile SL to HTML string
+    // Apply dynamic stylesheet from compiler.js if exists
+    if (stylesheet && typeof stylesheet === 'string') {
+      const styleEl = document.createElement('style');
+      styleEl.textContent = stylesheet;
+      document.head.appendChild(styleEl);
+    }
+
+    // Compile SL to HTML string
     function compileSL(sl) {
       if (typeof sl === 'string' || typeof sl === 'number') return sl;
       const tag = htmlMap[sl.type] || 'div';
@@ -63,14 +72,23 @@ createElement('SLContainerView', { class: 'container' },
       return `<${tag}${attrs}>${children}</${tag}>`;
     }
 
+    // Render SL tree and attach dynamic click events
     function renderSLTree(slTree, outputEl) {
       outputEl.innerHTML = compileSL(slTree);
-      // Attach click event if button exists
-      const btn = outputEl.querySelector('#btn1');
-      if (btn) btn.addEventListener('click', () => alert('Button clicked! 🎉'));
+
+      // Automatically attach click events to all buttons with data-action
+      const buttons = outputEl.querySelectorAll('button[data-action]');
+      buttons.forEach(btn => {
+        btn.onclick = () => {
+          const action = btn.getAttribute('data-action');
+          if (action === 'hello') alert('Hello! 👋');
+          else if (action === 'bye') alert('Goodbye! 👋');
+          else alert(`Button clicked: ${action}`);
+        };
+      });
     }
 
-    // Compile button click
+    // Compile button
     const compileBtn = document.getElementById('compileBtn');
     compileBtn.addEventListener('click', () => {
       const slInput = document.getElementById('slInput').value;
@@ -78,13 +96,13 @@ createElement('SLContainerView', { class: 'container' },
       const jsOutput = document.getElementById('jsOutput');
 
       try {
-        // Evaluate SL code input
+        // Evaluate SL code dynamically
         const slTree = eval(slInput);
 
         // Render HTML
         renderSLTree(slTree, renderedOutput);
 
-        // Display compiled JS (pretty-print)
+        // Show compiled JS
         jsOutput.textContent = JSON.stringify(slTree, null, 2);
       } catch (err) {
         renderedOutput.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
