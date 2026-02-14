@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Starlight Playground</title>
+  <title>Starlight</title>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-  <!-- Babel -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
     body {
@@ -21,15 +18,15 @@
 
     .topbar {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       padding: 10px 15px;
       background: #020617;
       border-bottom: 1px solid #1e293b;
     }
 
     .title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
     }
 
@@ -43,12 +40,12 @@
       font-size: 14px;
     }
 
-    .run-btn:hover {
-      background: #16a34a;
-    }
-
     .run-btn i {
       margin-right: 6px;
+    }
+
+    .run-btn:hover {
+      background: #16a34a;
     }
 
     .layout {
@@ -76,62 +73,77 @@
       line-height: 1.5;
     }
 
-    /* Phone preview */
+    textarea::selection {
+      background: #334155;
+    }
+
+    /* 📱 Phone Frame */
+    .phone-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
     .phone {
       width: 360px;
       height: 640px;
-      margin: auto;
-      background: white;
+      background: #000;
       border-radius: 25px;
-      overflow: hidden;
-      border: 5px solid #111;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      padding: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      position: relative;
     }
 
-    #output {
+    .screen {
       width: 100%;
       height: 100%;
+      background: #fff;
+      border-radius: 18px;
       overflow: auto;
-      color: black;
+      color: #000;
+    }
+
+    /* Optional notch */
+    .notch {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 20px;
+      background: #000;
+      border-radius: 10px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="title">Starlight Playground (Android Preview)</div>
+  <div class="title">Starlight Frontend</div>
   <button class="run-btn" id="runBtn">
     <i class="fas fa-play"></i> Run
   </button>
 </div>
 
 <div class="layout">
-
   <!-- Editor -->
   <div class="panel">
     <textarea id="editor">
-/** @jsx SL */
-
 function App() {
-  return (
-    <SLContainerView style={{ padding: "20px", alignItems: "center" }}>
+  return SL("SLContainerView", { style: { padding: "20px", textAlign: "center" } },
 
-      <SLHeader1>
-        Welcome to Starlight Frontend Language
-      </SLHeader1>
+    SL("SLHeader1", {}, "Welcome to Starlight Frontend Language"),
 
-      <SLTextView style={{ marginTop: "10px" }}>
-        developed by Dominex Macedon.
-      </SLTextView>
+    SL("SLTextView", { style: { marginTop: "10px" } },
+      "developed by Dominex Macedon."
+    ),
 
-      <SLButton
-        style={{ marginTop: "20px", padding: "10px" }}
-        onClick={() => alert("Hello from Android UI 🚀")}
-      >
-        Click Me
-      </SLButton>
-
-    </SLContainerView>
+    SL("SLButton", {
+      style: { marginTop: "20px", padding: "10px" },
+      onClick: () => alert("Hello from phone UI ")
+    }, "Click Me")
   );
 }
 
@@ -139,13 +151,15 @@ run(App, document.getElementById("output"));
     </textarea>
   </div>
 
-  <!-- Phone Preview -->
-  <div class="panel" style="display:flex; align-items:center; justify-content:center;">
-    <div class="phone">
-      <div id="output"></div>
+  <!-- Phone Output -->
+  <div class="panel">
+    <div class="phone-wrapper">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen" id="output"></div>
+      </div>
     </div>
   </div>
-
 </div>
 
 <script type="module">
@@ -155,25 +169,18 @@ run(App, document.getElementById("output"));
   const output = document.getElementById('output');
   const runBtn = document.getElementById('runBtn');
 
-  // expose runtime globally for Babel
-  window.SL = SLRuntime.SL;
-  window.run = SLRuntime.run;
-
   function runCode() {
     output.innerHTML = '';
 
     try {
-      const code = editor.value;
+      const userCode = editor.value;
 
-      // Transform JSX → JS
-      const transformed = Babel.transform(code, {
-        presets: [],
-        plugins: [["transform-react-jsx", { pragma: "SL" }]]
-      }).code;
+      const fn = new Function(
+        ...Object.keys(SLRuntime),
+        userCode
+      );
 
-      // Execute compiled code
-      new Function(transformed)();
-
+      fn(...Object.values(SLRuntime));
     } catch (err) {
       output.innerHTML = '<span style="color:red;">Error: ' + err.message + '</span>';
       console.error(err);
@@ -182,7 +189,6 @@ run(App, document.getElementById("output"));
 
   runBtn.addEventListener('click', runCode);
 
-  // Auto run
   runCode();
 </script>
 
