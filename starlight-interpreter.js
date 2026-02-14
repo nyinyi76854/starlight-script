@@ -119,6 +119,7 @@ export const StyleSheet = {
     return styles;
   }
 };
+
 function renderNode(node) {
   if (typeof node === "string" || typeof node === "number") {
     return document.createTextNode(node);
@@ -134,7 +135,7 @@ function renderNode(node) {
   for (let key in (node.props || {})) {
     const value = node.props[key];
 
-    if (key === "style") {
+    if (key === "customize") { // <-- changed from "style"
       Object.assign(el.style, value);
     } else if (key.startsWith("on")) {
       el.addEventListener(key.slice(2).toLowerCase(), value);
