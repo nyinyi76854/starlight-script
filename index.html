@@ -102,6 +102,7 @@
       border-radius: 18px;
       overflow: auto;
       color: #000;
+      position: relative;
     }
 
     /* Optional notch */
@@ -132,16 +133,16 @@
   <div class="panel">
     <textarea id="editor">
 function App() {
-  return SL("SLContainerView", { style: { padding: "20px", textAlign: "center" } },
+  return SL("SLContainerView", { customize: { padding: "20px", textAlign: "center" } },
 
     SL("SLHeader1", {}, "Welcome to Starlight Frontend Language"),
 
-    SL("SLTextView", { style: { marginTop: "10px" } },
+    SL("SLTextView", { customize: { marginTop: "10px" } },
       "developed by Dominex Macedon."
     ),
 
     SL("SLButton", {
-      style: { marginTop: "20px", padding: "10px" },
+      customize: { marginTop: "20px", padding: "10px", backgroundColor: "#22c55e", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" },
       onClick: () => alert("Hello from phone UI ")
     }, "Click Me")
   );
@@ -189,6 +190,7 @@ run(App, document.getElementById("output"));
 
   runBtn.addEventListener('click', runCode);
 
+  // Auto-run on load
   runCode();
 </script>
 
